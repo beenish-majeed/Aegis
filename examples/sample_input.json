@@ -1,0 +1,20 @@
+{
+  "target": "example_service",
+  "version": "1.0.0",
+  "scan_options": {
+    "depth": "full",
+    "timeout": 30,
+    "rules": [
+      "default_security",
+      "compliance_check"
+    ],
+    "exclude_paths": [
+      "/tmp",
+      "/vendor"
+    ]
+  },
+  "reporting": {
+    "format": "json",
+    "output_file": "scan_results.json"
+  }
+}
