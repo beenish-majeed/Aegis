@@ -14,7 +14,3 @@ Make debugging RAG applications fast, explainable, and framework-agnostic.
 - Highlight supporting evidence
 - Generate faithfulness reports
 - Work with any RAG framework
-
-## License
-
-MIT
