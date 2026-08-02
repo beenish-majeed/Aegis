@@ -5,6 +5,7 @@ import numpy as np
 import pytest
 from aegis.scanner import (
     calculate_similarity,
+    classify_sentence,
     encode_texts,
     extract_sentences,
     find_best_chunk,
@@ -26,6 +27,8 @@ class DummyEmbeddingModel:
                 embeddings.append([0.0, 1.0, 0.0])
             elif "Berlin" in text or "Germany" in text:
                 embeddings.append([0.0, 0.0, 1.0])
+            elif "Unsupported" in text or "Hallucination" in text:
+                embeddings.append([0.1, 0.1, 0.1])
             else:
                 embeddings.append([0.5, 0.5, 0.5])
         return np.array(embeddings, dtype=np.float32)
@@ -192,7 +195,24 @@ def test_load_embedding_model_integration():
         pytest.skip("sentence_transformers library not fully installed in environment yet.")
 
 
-# --- Orchestration Tests for scan_faithfulness ---
+# --- Milestone 4 Tests ---
+
+def test_classify_sentence_above_threshold():
+    assert classify_sentence(0.85, threshold=0.75) == "SUPPORTED"
+
+
+def test_classify_sentence_below_threshold():
+    assert classify_sentence(0.60, threshold=0.75) == "POTENTIALLY_UNSUPPORTED"
+
+
+def test_classify_sentence_equal_threshold():
+    assert classify_sentence(0.75, threshold=0.75) == "SUPPORTED"
+
+
+def test_classify_sentence_custom_threshold():
+    assert classify_sentence(0.80, threshold=0.85) == "POTENTIALLY_UNSUPPORTED"
+    assert classify_sentence(0.90, threshold=0.85) == "SUPPORTED"
+
 
 def test_scan_faithfulness_basic():
     dummy = DummyEmbeddingModel()
@@ -212,11 +232,38 @@ def test_scan_faithfulness_basic():
     assert results[0]["best_chunk"] == "Paris is the capital of France."
     assert results[0]["chunk_index"] == 1
     assert pytest.approx(results[0]["similarity"], abs=1e-5) == 1.0
+    assert results[0]["status"] == "SUPPORTED"
 
     assert results[1]["sentence"] == "Tokyo is in Japan."
     assert results[1]["best_chunk"] == "Tokyo is the capital of Japan."
     assert results[1]["chunk_index"] == 0
     assert pytest.approx(results[1]["similarity"], abs=1e-5) == 1.0
+    assert results[1]["status"] == "SUPPORTED"
+
+
+def test_scan_faithfulness_status_field():
+    dummy = DummyEmbeddingModel()
+    question = "What are the capitals of France and Japan?"
+    chunks = [
+        "Tokyo is the capital of Japan.",
+        "Paris is the capital of France.",
+    ]
+    answer = "Paris is in France. Unsupported claim."
+
+    results = scan_faithfulness(question, chunks, answer, threshold=0.75, model=dummy)
+
+    assert len(results) == 2
+
+    # Sentence 1: Supported
+    assert results[0]["sentence"] == "Paris is in France."
+    assert results[0]["best_chunk"] == "Paris is the capital of France."
+    assert results[0]["chunk_index"] == 1
+    assert pytest.approx(results[0]["similarity"], abs=1e-5) == 1.0
+    assert results[0]["status"] == "SUPPORTED"
+
+    # Sentence 2: Unsupported claim
+    assert results[1]["sentence"] == "Unsupported claim."
+    assert results[1]["status"] == "POTENTIALLY_UNSUPPORTED"
 
 
 def test_scan_faithfulness_empty_chunks():
@@ -232,6 +279,7 @@ def test_scan_faithfulness_empty_chunks():
     assert results[0]["best_chunk"] is None
     assert results[0]["chunk_index"] is None
     assert results[0]["similarity"] == 0.0
+    assert results[0]["status"] == "POTENTIALLY_UNSUPPORTED"
 
 
 def test_scan_faithfulness_empty_answer():

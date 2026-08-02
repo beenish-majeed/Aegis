@@ -139,14 +139,22 @@ def find_best_chunk(
     return (retrieved_chunks[best_idx], best_score)
 
 
+def classify_sentence(similarity: float, threshold: float = 0.75) -> str:
+    """Classify sentence faithfulness as SUPPORTED or POTENTIALLY_UNSUPPORTED based on similarity threshold."""
+    if similarity >= threshold:
+        return "SUPPORTED"
+    return "POTENTIALLY_UNSUPPORTED"
+
+
 def scan_faithfulness(
     question: str,
     retrieved_chunks: List[str],
     answer: str,
+    threshold: float = 0.75,
     model: Optional[Any] = None,
     model_name: str = "all-MiniLM-L6-v2",
 ) -> List[Dict[str, Any]]:
-    """Orchestrate sentence extraction and similarity matching for RAG faithfulness audit."""
+    """Orchestrate sentence extraction, similarity matching, and classification for RAG faithfulness audit."""
     sentences = extract_sentences(answer)
     results: List[Dict[str, Any]] = []
 
@@ -157,6 +165,7 @@ def scan_faithfulness(
                 "best_chunk": None,
                 "chunk_index": None,
                 "similarity": 0.0,
+                "status": classify_sentence(0.0, threshold=threshold),
             })
         return results
 
@@ -175,11 +184,14 @@ def scan_faithfulness(
             chunk_index = None
             similarity = 0.0
 
+        status = classify_sentence(similarity, threshold=threshold)
+
         results.append({
             "sentence": sentence,
             "best_chunk": best_chunk,
             "chunk_index": chunk_index,
             "similarity": similarity,
+            "status": status,
         })
 
     return results
