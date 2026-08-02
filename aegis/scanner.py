@@ -1,41 +1,185 @@
 import json
 import re
+from functools import lru_cache
 from pathlib import Path
-from typing import List, Tuple, Union
+from typing import Any, Dict, List, Optional, Tuple, Union
+
+import numpy as np
+
+REQUIRED_KEYS = {"question", "retrieved_chunks", "answer"}
 
 
 def extract_sentences(answer: str) -> List[str]:
-    """Split text into sentences, stripping whitespace and filtering out empty sentences."""
-    if not answer or not answer.strip():
+    """
+    Split an answer into clean sentences.
+
+    Returns:
+        List[str]: List of non-empty sentences.
+    """
+    if not answer.strip():
         return []
 
-    # Split text by sentence boundary punctuation (.!? or newlines) followed by whitespace or end of line
     raw_sentences = re.split(r"(?<=[.!?])\s+|\n+", answer.strip())
-    
-    sentences = [s.strip() for s in raw_sentences if s and s.strip()]
-    return sentences
+
+    return [sentence.strip() for sentence in raw_sentences if sentence.strip()]
 
 
 def load_scan_input(path: Union[str, Path]) -> Tuple[str, List[str], str]:
-    """Load JSON file and return (question, retrieved_chunks, answer)."""
+    """
+    Load a scan input JSON file.
+
+    Returns:
+        tuple:
+            question,
+            retrieved_chunks,
+            answer
+    """
+
     file_path = Path(path)
-    
+
     if not file_path.exists():
-        raise FileNotFoundError(f"Scan input file not found: '{file_path}'")
-        
-    content = file_path.read_text(encoding="utf-8")
-    data = json.loads(content)
-    
+        raise FileNotFoundError(f"File not found: {file_path}")
+
+    with file_path.open("r", encoding="utf-8") as file:
+        data = json.load(file)
+
     if not isinstance(data, dict):
-        raise ValueError(f"Expected top-level JSON object in '{file_path}', got {type(data).__name__}")
-        
-    required_keys = {"question", "retrieved_chunks", "answer"}
-    missing_keys = [k for k in required_keys if k not in data]
-    if missing_keys:
-        raise KeyError(f"Missing required key(s) in JSON: {', '.join(sorted(missing_keys))}")
-        
-    question = str(data["question"])
-    retrieved_chunks = list(data["retrieved_chunks"])
-    answer = str(data["answer"])
-    
-    return question, retrieved_chunks, answer
+        raise ValueError("Input JSON must contain an object.")
+
+    missing = REQUIRED_KEYS - data.keys()
+    if missing:
+        raise KeyError(f"Missing required keys: {', '.join(sorted(missing))}")
+
+    if not isinstance(data["question"], str):
+        raise TypeError("'question' must be a string.")
+
+    if not isinstance(data["retrieved_chunks"], list):
+        raise TypeError("'retrieved_chunks' must be a list.")
+
+    if not isinstance(data["answer"], str):
+        raise TypeError("'answer' must be a string.")
+
+    return (
+        data["question"],
+        data["retrieved_chunks"],
+        data["answer"],
+    )
+
+
+@lru_cache(maxsize=4)
+def load_embedding_model(model_name: str = "all-MiniLM-L6-v2") -> Any:
+    """Load and cache the SentenceTransformer embedding model."""
+    from sentence_transformers import SentenceTransformer
+
+    return SentenceTransformer(model_name)
+
+
+def encode_texts(
+    texts: List[str],
+    model: Optional[Any] = None,
+    model_name: str = "all-MiniLM-L6-v2",
+) -> np.ndarray:
+    """Encode a list of text strings into numpy array embeddings."""
+    if not texts:
+        return np.empty((0, 384))
+
+    if model is None:
+        model = load_embedding_model(model_name)
+
+    embeddings = model.encode(texts, convert_to_numpy=True)
+    return np.array(embeddings)
+
+
+def calculate_similarity(embeddings1: np.ndarray, embeddings2: np.ndarray) -> np.ndarray:
+    """Compute cosine similarity matrix between two sets of embeddings."""
+    if embeddings1.size == 0 or embeddings2.size == 0:
+        rows = embeddings1.shape[0] if embeddings1.ndim > 1 else 0
+        cols = embeddings2.shape[0] if embeddings2.ndim > 1 else 0
+        return np.empty((rows, cols))
+
+    emb1 = np.atleast_2d(embeddings1)
+    emb2 = np.atleast_2d(embeddings2)
+
+    norm1 = np.linalg.norm(emb1, axis=1, keepdims=True)
+    norm2 = np.linalg.norm(emb2, axis=1, keepdims=True)
+
+    norm1 = np.where(norm1 == 0, 1e-10, norm1)
+    norm2 = np.where(norm2 == 0, 1e-10, norm2)
+
+    normalized_emb1 = emb1 / norm1
+    normalized_emb2 = emb2 / norm2
+
+    return np.dot(normalized_emb1, normalized_emb2.T)
+
+
+def find_best_chunk(
+    sentence: str,
+    retrieved_chunks: List[str],
+    model: Optional[Any] = None,
+    model_name: str = "all-MiniLM-L6-v2",
+) -> Tuple[str, float]:
+    """Find the retrieved chunk with highest semantic similarity to the given sentence."""
+    if not sentence or not sentence.strip() or not retrieved_chunks:
+        return ("", 0.0)
+
+    if model is None:
+        model = load_embedding_model(model_name)
+
+    sentence_emb = encode_texts([sentence], model=model)
+    chunks_emb = encode_texts(retrieved_chunks, model=model)
+
+    sim_matrix = calculate_similarity(sentence_emb, chunks_emb)
+    if sim_matrix.size == 0:
+        return ("", 0.0)
+
+    scores = sim_matrix[0]
+    best_idx = int(np.argmax(scores))
+    best_score = float(scores[best_idx])
+
+    return (retrieved_chunks[best_idx], best_score)
+
+
+def scan_faithfulness(
+    question: str,
+    retrieved_chunks: List[str],
+    answer: str,
+    model: Optional[Any] = None,
+    model_name: str = "all-MiniLM-L6-v2",
+) -> List[Dict[str, Any]]:
+    """Orchestrate sentence extraction and similarity matching for RAG faithfulness audit."""
+    sentences = extract_sentences(answer)
+    results: List[Dict[str, Any]] = []
+
+    if not retrieved_chunks:
+        for sentence in sentences:
+            results.append({
+                "sentence": sentence,
+                "best_chunk": None,
+                "chunk_index": None,
+                "similarity": 0.0,
+            })
+        return results
+
+    if model is None:
+        model = load_embedding_model(model_name)
+
+    for sentence in sentences:
+        best_chunk, similarity = find_best_chunk(
+            sentence, retrieved_chunks, model=model, model_name=model_name
+        )
+
+        if best_chunk and best_chunk in retrieved_chunks:
+            chunk_index: Optional[int] = retrieved_chunks.index(best_chunk)
+        else:
+            best_chunk = None
+            chunk_index = None
+            similarity = 0.0
+
+        results.append({
+            "sentence": sentence,
+            "best_chunk": best_chunk,
+            "chunk_index": chunk_index,
+            "similarity": similarity,
+        })
+
+    return results
