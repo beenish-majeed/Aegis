@@ -1,56 +1,18 @@
 [build-system]
-requires = ["setuptools>=61.0"]
+requires = ["setuptools>=68"]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "aegis"
 version = "0.1.0"
-description = "A modular Python security scanning and auditing framework."
+description = "Framework-agnostic RAG Faithfulness Auditor"
 readme = "README.md"
+requires-python = ">=3.11"
 authors = [
-    { name = "Aegis Contributors" }
-]
-license = { text = "MIT" }
-requires-python = ">=3.8"
-keywords = ["security", "scanner", "audit", "cli"]
-classifiers = [
-    "Development Status :: 2 - Pre-Alpha",
-    "Intended Audience :: Developers",
-    "License :: OSI Approved :: MIT License",
-    "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.8",
-    "Programming Language :: Python :: 3.9",
-    "Programming Language :: Python :: 3.10",
-    "Programming Language :: Python :: 3.11",
-    "Programming Language :: Python :: 3.12",
-    "Topic :: Security",
-]
-dependencies = [
-    "pydantic>=2.0.0",
-    "click>=8.1.0",
-    "jinja2>=3.1.0",
+    { name = "Beenish Majeed" }
 ]
 
-[project.optional-dependencies]
-dev = [
-    "pytest>=7.4.0",
-    "pytest-cov>=4.1.0",
-    "black>=23.7.0",
-    "ruff>=0.0.280",
-    "mypy>=1.5.0",
-]
+dependencies = []
 
-[project.scripts]
-aegis = "aegis.cli:main"
-
-[tool.pytest.ini_options]
-testpaths = ["tests"]
-python_files = ["test_*.py"]
-
-[tool.black]
-line-length = 88
-target-version = ['py38']
-
-[tool.ruff]
-line-length = 88
-select = ["E", "F", "W", "I", "N", "UP", "B", "A", "C4", "SIM"]
+[tool.setuptools.packages.find]
+where = ["."]
