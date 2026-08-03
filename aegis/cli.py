@@ -128,6 +128,108 @@ def scan(
     display_results_report(results, question=question, threshold=threshold)
 
 
+@app.command(name="batch-scan")
+def batch_scan(
+    input_directory: Path = typer.Argument(
+        ...,
+        help="Path to the directory containing JSON files for batch scanning.",
+    ),
+    threshold: float = typer.Option(
+        DEFAULT_SIMILARITY_THRESHOLD,
+        "--threshold",
+        "-t",
+        help="Similarity threshold for sentence faithfulness classification.",
+    ),
+) -> None:
+    """Batch scan multiple RAG input JSON files in a directory."""
+    if not input_directory.exists():
+        console.print(f"[bold red]Error:[/] Directory '{input_directory}' does not exist.")
+        raise typer.Exit(code=1)
+
+    if not input_directory.is_dir():
+        console.print(f"[bold red]Error:[/] Path '{input_directory}' is not a valid directory.")
+        raise typer.Exit(code=1)
+
+    json_files = sorted(list(input_directory.rglob("*.json")))
+
+    console.print()
+    console.print(
+        Panel(
+            f"[bold cyan]Aegis Batch Scan Report[/]\n[italic]Directory: {input_directory}[/]",
+            expand=False,
+        )
+    )
+
+    if not json_files:
+        console.print("[bold yellow]No .json files found in the specified directory.[/]")
+        summary_table = Table(title="Batch Audit Summary", show_header=False, box=None)
+        summary_table.add_row("[bold]Total files:[/]", "0")
+        summary_table.add_row("[bold green]Successful scans:[/]", "0")
+        summary_table.add_row("[bold red]Failed scans:[/]", "0")
+        summary_table.add_row("[bold cyan]Average faithfulness score:[/]", "0.0%")
+        console.print(Panel(summary_table, title="[bold]Summary[/]", expand=False))
+        return
+
+    table = Table(title="Batch Audit Results", show_lines=True)
+    table.add_column("File", style="white")
+    table.add_column("Score", justify="right", style="cyan")
+    table.add_column("Supported", justify="center", style="green")
+    table.add_column("Unsupported", justify="center", style="red")
+
+    total_files = len(json_files)
+    successful_scans = 0
+    failed_scans = 0
+    total_score = 0.0
+
+    for file_path in json_files:
+        rel_path_str = str(file_path.relative_to(input_directory))
+        try:
+            question, retrieved_chunks, answer = load_scan_input(file_path)
+            results = scan_faithfulness(
+                question=question,
+                retrieved_chunks=retrieved_chunks,
+                answer=answer,
+                threshold=threshold,
+            )
+            total_sentences = len(results)
+            supported = sum(1 for r in results if r.get("status") == "SUPPORTED")
+            unsupported = total_sentences - supported
+            score = (
+                (supported / total_sentences * 100.0) if total_sentences > 0 else 0.0
+            )
+
+            successful_scans += 1
+            total_score += score
+
+            table.add_row(
+                rel_path_str,
+                f"{score:.1f}%",
+                str(supported),
+                str(unsupported),
+            )
+        except Exception as exc:
+            failed_scans += 1
+            console.print(f"[bold red]Error processing '{rel_path_str}':[/] {exc}")
+            table.add_row(
+                rel_path_str,
+                "[bold red]FAILED[/]",
+                "-",
+                "-",
+            )
+
+    console.print(table)
+
+    avg_score = (total_score / successful_scans) if successful_scans > 0 else 0.0
+
+    summary_table = Table(title="Batch Audit Summary", show_header=False, box=None)
+    summary_table.add_row("[bold]Total files:[/]", str(total_files))
+    summary_table.add_row("[bold green]Successful scans:[/]", str(successful_scans))
+    summary_table.add_row("[bold red]Failed scans:[/]", str(failed_scans))
+    summary_table.add_row("[bold cyan]Average faithfulness score:[/]", f"{avg_score:.1f}%")
+
+    console.print(Panel(summary_table, title="[bold]Summary[/]", expand=False))
+
+
 def main() -> None:
     app()
 
