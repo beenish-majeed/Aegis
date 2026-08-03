@@ -1,4 +1,13 @@
-from aegis.report import format_scan_report, format_sentence_result
+import json
+from pathlib import Path
+
+from aegis.report import (
+    compute_scan_summary,
+    format_scan_report,
+    format_sentence_result,
+    generate_html_report,
+    generate_json_report,
+)
 
 
 def test_format_scan_report_empty():
@@ -113,3 +122,235 @@ def test_format_scan_report_best_chunk_formatting():
     block2 = format_sentence_result(res2)
     assert "Best Chunk: None" in block2
     assert "Chunk Index: None" in block2
+
+
+# --- Direct Unit Tests for compute_scan_summary ---
+
+def test_compute_scan_summary_empty():
+    summary = compute_scan_summary([])
+    assert summary["total_sentences"] == 0
+    assert summary["supported"] == 0
+    assert summary["potentially_unsupported"] == 0
+    assert summary["faithfulness_score"] == 0.0
+
+
+def test_compute_scan_summary_all_supported():
+    results = [
+        {"sentence": "S1", "status": "SUPPORTED"},
+        {"sentence": "S2", "status": "SUPPORTED"},
+    ]
+    summary = compute_scan_summary(results)
+    assert summary["total_sentences"] == 2
+    assert summary["supported"] == 2
+    assert summary["potentially_unsupported"] == 0
+    assert summary["faithfulness_score"] == 100.0
+
+
+def test_compute_scan_summary_mixed():
+    results = [
+        {"sentence": "S1", "status": "SUPPORTED"},
+        {"sentence": "S2", "status": "POTENTIALLY_UNSUPPORTED"},
+    ]
+    summary = compute_scan_summary(results)
+    assert summary["total_sentences"] == 2
+    assert summary["supported"] == 1
+    assert summary["potentially_unsupported"] == 1
+    assert summary["faithfulness_score"] == 50.0
+
+
+# --- Milestone 6 (JSON Report) Tests ---
+
+def test_generate_json_report_file_creation(tmp_path: Path):
+    output_file = tmp_path / "report.json"
+    results = [
+        {
+            "sentence": "Test sentence.",
+            "best_chunk": "Test chunk.",
+            "chunk_index": 0,
+            "similarity": 0.9,
+            "status": "SUPPORTED",
+        }
+    ]
+    created_path = generate_json_report(results, "Test Question?", output_file)
+    assert created_path.exists()
+    assert created_path.is_file()
+
+
+def test_generate_json_report_valid_json(tmp_path: Path):
+    output_file = tmp_path / "report.json"
+    results = [
+        {
+            "sentence": "Test sentence.",
+            "best_chunk": "Test chunk.",
+            "chunk_index": 0,
+            "similarity": 0.9,
+            "status": "SUPPORTED",
+        }
+    ]
+    generate_json_report(results, "Test Question?", output_file)
+
+    data = json.loads(output_file.read_text(encoding="utf-8"))
+    assert data["question"] == "Test Question?"
+    assert "summary" in data
+    assert "results" in data
+    assert len(data["results"]) == 1
+
+
+def test_generate_json_report_summary_correctness(tmp_path: Path):
+    output_file = tmp_path / "report.json"
+    results = [
+        {
+            "sentence": "Supported sentence.",
+            "best_chunk": "Chunk 1.",
+            "chunk_index": 0,
+            "similarity": 0.95,
+            "status": "SUPPORTED",
+        },
+        {
+            "sentence": "Unsupported sentence.",
+            "best_chunk": "Chunk 2.",
+            "chunk_index": 1,
+            "similarity": 0.40,
+            "status": "POTENTIALLY_UNSUPPORTED",
+        },
+    ]
+    generate_json_report(results, "Test Question?", output_file)
+
+    data = json.loads(output_file.read_text(encoding="utf-8"))
+    summary = data["summary"]
+
+    assert summary["total_sentences"] == 2
+    assert summary["supported"] == 1
+    assert summary["potentially_unsupported"] == 1
+    assert summary["faithfulness_score"] == 50.0
+
+
+def test_generate_json_report_score_correctness(tmp_path: Path):
+    output_file = tmp_path / "report.json"
+
+    # All supported -> 100%
+    results_all = [
+        {"sentence": "S1", "best_chunk": "C1", "chunk_index": 0, "similarity": 0.9, "status": "SUPPORTED"}
+    ]
+    generate_json_report(results_all, "Q?", output_file)
+    data1 = json.loads(output_file.read_text(encoding="utf-8"))
+    assert data1["faithfulness_score"] == 100.0
+
+    # Expanded empty report test verifying all summary fields
+    generate_json_report([], "Q?", output_file)
+    data2 = json.loads(output_file.read_text(encoding="utf-8"))
+    assert data2["faithfulness_score"] == 0.0
+    assert data2["summary"]["total_sentences"] == 0
+    assert data2["summary"]["supported"] == 0
+    assert data2["summary"]["potentially_unsupported"] == 0
+    assert data2["summary"]["faithfulness_score"] == 0.0
+
+
+# --- Milestone 7 (HTML Report) Tests ---
+
+def test_generate_html_report_file_creation(tmp_path: Path):
+    output_file = tmp_path / "report.html"
+    results = [
+        {
+            "sentence": "Test sentence.",
+            "best_chunk": "Test chunk.",
+            "chunk_index": 0,
+            "similarity": 0.9,
+            "status": "SUPPORTED",
+        }
+    ]
+    created_path = generate_html_report(results, "Test Question?", output_file)
+    assert created_path.exists()
+    assert created_path.is_file()
+
+
+def test_generate_html_report_structure(tmp_path: Path):
+    output_file = tmp_path / "report.html"
+    results = [
+        {
+            "sentence": "Test sentence.",
+            "best_chunk": "Test chunk.",
+            "chunk_index": 0,
+            "similarity": 0.9,
+            "status": "SUPPORTED",
+        }
+    ]
+    generate_html_report(results, "Test Question?", output_file)
+
+    html_content = output_file.read_text(encoding="utf-8")
+    assert "<!DOCTYPE html>" in html_content
+    assert "<title>Aegis Faithfulness Report</title>" in html_content
+    assert "Test Question?" in html_content
+
+
+def test_generate_html_report_summary_exists(tmp_path: Path):
+    output_file = tmp_path / "report.html"
+    results = [
+        {"sentence": "S1", "best_chunk": "C1", "chunk_index": 0, "similarity": 0.9, "status": "SUPPORTED"},
+        {"sentence": "S2", "best_chunk": "C2", "chunk_index": 1, "similarity": 0.3, "status": "POTENTIALLY_UNSUPPORTED"},
+    ]
+    generate_html_report(results, "Test Question?", output_file)
+
+    html_content = output_file.read_text(encoding="utf-8")
+    assert "Total Sentences" in html_content
+    assert "Supported" in html_content
+    assert "Potentially Unsupported" in html_content
+
+
+def test_generate_html_report_table_exists(tmp_path: Path):
+    output_file = tmp_path / "report.html"
+    results = [
+        {
+            "sentence": "Paris is in France.",
+            "best_chunk": "Paris is capital.",
+            "chunk_index": 0,
+            "similarity": 0.95,
+            "status": "SUPPORTED",
+        }
+    ]
+    generate_html_report(results, "Where is Paris?", output_file)
+
+    html_content = output_file.read_text(encoding="utf-8")
+    assert "<table" in html_content
+    assert "Paris is in France." in html_content
+    assert "Paris is capital." in html_content
+    assert "SUPPORTED" in html_content
+
+
+def test_generate_html_report_score_exists(tmp_path: Path):
+    output_file = tmp_path / "report.html"
+    results = [
+        {"sentence": "S1", "best_chunk": "C1", "chunk_index": 0, "similarity": 0.9, "status": "SUPPORTED"}
+    ]
+    generate_html_report(results, "Q?", output_file)
+
+    html_content = output_file.read_text(encoding="utf-8")
+    assert "Faithfulness Score" in html_content
+    assert "100.0%" in html_content
+
+
+def test_generate_html_report_html_escaping(tmp_path: Path):
+    output_file = tmp_path / "report_xss.html"
+    results = [
+        {
+            "sentence": "<script>alert('xss')</script>",
+            "best_chunk": "<b>chunk</b>",
+            "chunk_index": 0,
+            "similarity": 0.9,
+            "status": "SUPPORTED",
+        }
+    ]
+    generate_html_report(results, "<script>alert('q')</script>", output_file)
+
+    html_content = output_file.read_text(encoding="utf-8")
+    assert "<script>alert('q')</script>" not in html_content
+    assert "<script>alert('xss')</script>" not in html_content
+    assert "&lt;script&gt;alert(&#x27;q&#x27;)&lt;/script&gt;" in html_content or "&lt;script&gt;" in html_content
+
+
+def test_generate_html_report_empty_results(tmp_path: Path):
+    output_file = tmp_path / "report_empty.html"
+    generate_html_report([], "Empty Question?", output_file)
+
+    html_content = output_file.read_text(encoding="utf-8")
+    assert "No sentences analyzed." in html_content
