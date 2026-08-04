@@ -44,12 +44,14 @@ def display_results_report(
     table.add_column("Status", justify="center")
     table.add_column("Similarity", justify="right", style="cyan")
     table.add_column("Best Matching Chunk", style="dim")
+    table.add_column("Supporting Evidence", style="italic green")
 
     for idx, item in enumerate(results, start=1):
         sentence = item.get("sentence", "")
         status = item.get("status", "POTENTIALLY_UNSUPPORTED")
         similarity = item.get("similarity", 0.0)
         best_chunk = item.get("best_chunk") or "None"
+        supporting_evidence = item.get("supporting_evidence") or "None"
 
         if status == "SUPPORTED":
             status_text = "[bold green]SUPPORTED[/]"
@@ -62,6 +64,7 @@ def display_results_report(
             status_text,
             f"{similarity:.4f}",
             best_chunk,
+            supporting_evidence,
         )
 
     console.print(table)

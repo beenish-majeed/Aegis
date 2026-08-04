@@ -32,6 +32,7 @@ def test_cli_scan_valid_file(tmp_path: Path):
             "chunk_index": 0,
             "similarity": 0.95,
             "status": "SUPPORTED",
+            "supporting_evidence": "Aegis is an auditor.",
         }
     ]
 
@@ -42,6 +43,8 @@ def test_cli_scan_valid_file(tmp_path: Path):
         assert "Total Sentences" in result.output
         assert "Supported" in result.output
         assert "Faithfulness Score" in result.output
+        assert "Supporting" in result.output
+        assert "Evidence" in result.output
 
 
 def test_cli_scan_custom_threshold(tmp_path: Path):
@@ -60,6 +63,7 @@ def test_cli_scan_custom_threshold(tmp_path: Path):
             "chunk_index": 0,
             "similarity": 0.70,
             "status": "POTENTIALLY_UNSUPPORTED",
+            "supporting_evidence": None,
         }
     ]
 
@@ -85,6 +89,7 @@ def test_display_results_report_summary():
             "chunk_index": 0,
             "similarity": 0.95,
             "status": "SUPPORTED",
+            "supporting_evidence": "Matching sentence evidence.",
         },
         {
             "sentence": "Sentence 2 is unsupported.",
@@ -92,6 +97,7 @@ def test_display_results_report_summary():
             "chunk_index": 1,
             "similarity": 0.40,
             "status": "POTENTIALLY_UNSUPPORTED",
+            "supporting_evidence": None,
         },
     ]
 
@@ -99,6 +105,93 @@ def test_display_results_report_summary():
     with patch("aegis.cli.console.print") as mock_print:
         display_results_report(results, question="Test Question")
         assert mock_print.call_count >= 2
+
+
+# --- v2.0.0 Step 3 (Display Supporting Evidence in CLI Output) Tests ---
+
+def test_cli_scan_displays_supporting_evidence(tmp_path: Path):
+    sample_file = tmp_path / "sample.json"
+    data = {
+        "question": "Who created Python?",
+        "retrieved_chunks": ["Python was created by Guido van Rossum."],
+        "answer": "Guido van Rossum created Python.",
+    }
+    sample_file.write_text(json.dumps(data), encoding="utf-8")
+
+    dummy_results = [
+        {
+            "sentence": "Guido van Rossum created Python.",
+            "best_chunk": "Python was created by Guido van Rossum.",
+            "chunk_index": 0,
+            "similarity": 0.92,
+            "status": "SUPPORTED",
+            "supporting_evidence": "Python was created by Guido van Rossum.",
+        }
+    ]
+
+    with patch("aegis.cli.scan_faithfulness", return_value=dummy_results):
+        result = runner.invoke(app, ["scan", str(sample_file)])
+        assert result.exit_code == 0
+        assert "Supporting" in result.output
+        assert "Evidence" in result.output
+        assert "Guido van" in result.output
+        assert "Rossum." in result.output
+
+
+def test_cli_scan_handles_none_supporting_evidence(tmp_path: Path):
+    sample_file = tmp_path / "sample.json"
+    data = {
+        "question": "What is Python?",
+        "retrieved_chunks": ["Python is a language."],
+        "answer": "Unsupported claim about space.",
+    }
+    sample_file.write_text(json.dumps(data), encoding="utf-8")
+
+    dummy_results = [
+        {
+            "sentence": "Unsupported claim about space.",
+            "best_chunk": "Python is a language.",
+            "chunk_index": 0,
+            "similarity": 0.20,
+            "status": "POTENTIALLY_UNSUPPORTED",
+            "supporting_evidence": None,
+        }
+    ]
+
+    with patch("aegis.cli.scan_faithfulness", return_value=dummy_results):
+        result = runner.invoke(app, ["scan", str(sample_file)])
+        assert result.exit_code == 0
+        assert "Supporting" in result.output
+        assert "Evidence" in result.output
+        assert "None" in result.output
+
+
+def test_cli_scan_handles_missing_supporting_evidence_key(tmp_path: Path):
+    sample_file = tmp_path / "sample.json"
+    data = {
+        "question": "Legacy data test?",
+        "retrieved_chunks": ["Legacy chunk."],
+        "answer": "Legacy answer.",
+    }
+    sample_file.write_text(json.dumps(data), encoding="utf-8")
+
+    # Legacy dictionary without supporting_evidence key
+    legacy_results = [
+        {
+            "sentence": "Legacy answer.",
+            "best_chunk": "Legacy chunk.",
+            "chunk_index": 0,
+            "similarity": 0.85,
+            "status": "SUPPORTED",
+        }
+    ]
+
+    with patch("aegis.cli.scan_faithfulness", return_value=legacy_results):
+        result = runner.invoke(app, ["scan", str(sample_file)])
+        assert result.exit_code == 0
+        assert "Supporting" in result.output
+        assert "Evidence" in result.output
+        assert "None" in result.output
 
 
 # --- Milestone 9 (Batch Scanning) Tests ---
@@ -132,6 +225,7 @@ def test_batch_scan_single_json_file(tmp_path: Path):
             "chunk_index": 0,
             "similarity": 0.95,
             "status": "SUPPORTED",
+            "supporting_evidence": "Aegis is an auditor.",
         }
     ]
 
@@ -150,7 +244,7 @@ def test_batch_scan_multiple_json_files(tmp_path: Path):
     (tmp_path / "file2.json").write_text(json.dumps(data2), encoding="utf-8")
 
     dummy_results = [
-        {"sentence": "A.", "best_chunk": "C.", "chunk_index": 0, "similarity": 0.9, "status": "SUPPORTED"}
+        {"sentence": "A.", "best_chunk": "C.", "chunk_index": 0, "similarity": 0.9, "status": "SUPPORTED", "supporting_evidence": "C."}
     ]
 
     with patch("aegis.cli.scan_faithfulness", return_value=dummy_results):
@@ -179,7 +273,7 @@ def test_batch_scan_mixture_valid_and_invalid(tmp_path: Path):
     invalid_file.write_text("{broken", encoding="utf-8")
 
     dummy_results = [
-        {"sentence": "A.", "best_chunk": "C.", "chunk_index": 0, "similarity": 0.9, "status": "SUPPORTED"}
+        {"sentence": "A.", "best_chunk": "C.", "chunk_index": 0, "similarity": 0.9, "status": "SUPPORTED", "supporting_evidence": "C."}
     ]
 
     with patch("aegis.cli.scan_faithfulness", return_value=dummy_results):
@@ -203,7 +297,7 @@ def test_batch_scan_recursive_directory(tmp_path: Path):
     file2.write_text(json.dumps(data), encoding="utf-8")
 
     dummy_results = [
-        {"sentence": "A.", "best_chunk": "C.", "chunk_index": 0, "similarity": 0.9, "status": "SUPPORTED"}
+        {"sentence": "A.", "best_chunk": "C.", "chunk_index": 0, "similarity": 0.9, "status": "SUPPORTED", "supporting_evidence": "C."}
     ]
 
     with patch("aegis.cli.scan_faithfulness", return_value=dummy_results):
@@ -222,7 +316,7 @@ def test_batch_scan_non_json_files_ignored(tmp_path: Path):
     json_file.write_text(json.dumps(data), encoding="utf-8")
 
     dummy_results = [
-        {"sentence": "A.", "best_chunk": "C.", "chunk_index": 0, "similarity": 0.9, "status": "SUPPORTED"}
+        {"sentence": "A.", "best_chunk": "C.", "chunk_index": 0, "similarity": 0.9, "status": "SUPPORTED", "supporting_evidence": "C."}
     ]
 
     with patch("aegis.cli.scan_faithfulness", return_value=dummy_results):
@@ -239,7 +333,7 @@ def test_batch_scan_summary_statistics(tmp_path: Path):
     (tmp_path / "f2.json").write_text(json.dumps(data2), encoding="utf-8")
 
     dummy_results = [
-        {"sentence": "A.", "best_chunk": "C.", "chunk_index": 0, "similarity": 0.9, "status": "SUPPORTED"}
+        {"sentence": "A.", "best_chunk": "C.", "chunk_index": 0, "similarity": 0.9, "status": "SUPPORTED", "supporting_evidence": "C."}
     ]
 
     with patch("aegis.cli.scan_faithfulness", return_value=dummy_results):
