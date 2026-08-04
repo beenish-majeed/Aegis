@@ -1,11 +1,33 @@
 # ==============================================================================
 # AEGIS v5.0.0 — PRODUCTION GITIGNORE
-# Open-Source Security & Build Artifact Configuration
+# Enterprise Open-Source Security & Build Artifact Configuration
+# Standards: Python + FastAPI + Next.js 14 + React 18 + TypeScript Monorepo
 # ==============================================================================
 
 # ------------------------------------------------------------------------------
-# 1. Python Environment & Build Artifacts
+# 1. Environment & Security Credentials (CRITICAL)
 # ------------------------------------------------------------------------------
+.env
+.env.local
+.env.development
+.env.production
+.env.test
+.env.*.local
+frontend/.env
+frontend/.env.local
+frontend/.env.development
+frontend/.env.production
+frontend/.env.test
+frontend/.env.*.local
+
+# Explicitly track configuration templates required for open-source contributors
+!.env.example
+!frontend/.env.example
+
+# ------------------------------------------------------------------------------
+# 2. Python Backend & Virtual Environments
+# ------------------------------------------------------------------------------
+# Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
 *$py.class
@@ -20,7 +42,7 @@ ENV/
 env.bak/
 venv.bak/
 
-# Packaging & Distribution
+# Packaging, Distribution & Builds
 build/
 develop-eggs/
 dist/
@@ -39,7 +61,10 @@ share/python-wheels/
 *.egg
 MANIFEST
 
-# Testing & Coverage Tool Caches
+# ------------------------------------------------------------------------------
+# 3. Testing, Coverage & Quality Assurance Caches
+# ------------------------------------------------------------------------------
+# Python QA Tool Caches
 .pytest_cache/
 .mypy_cache/
 .ruff_cache/
@@ -54,18 +79,29 @@ coverage.xml
 *.py,cover
 .hypothesis/
 
+# Node.js / Vitest Coverage
+coverage/
+frontend/coverage/
+
 # ------------------------------------------------------------------------------
-# 2. Node.js & Next.js Build Artifacts
+# 4. Node.js & Next.js Frontend Build Artifacts
 # ------------------------------------------------------------------------------
+# Dependencies & Package Caches
 node_modules/
 frontend/node_modules/
+.pnpm-store/
+.yarn/
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+
+# Next.js Build Outputs
 .next/
 frontend/.next/
 out/
 frontend/out/
-coverage/
-frontend/coverage/
 .turbo/
+frontend/.turbo/
 *.tsbuildinfo
 next-env.d.ts
 
@@ -77,25 +113,7 @@ pnpm-debug.log*
 lerna-debug.log*
 
 # ------------------------------------------------------------------------------
-# 3. Environment & Security Credentials (CRITICAL)
-# Never commit real API keys, tokens, or environment credentials!
-# ------------------------------------------------------------------------------
-.env
-.env.local
-.env.development
-.env.production
-.env.test
-.env.*.local
-frontend/.env
-frontend/.env.local
-frontend/.env.*.local
-
-# Explicitly ensure configuration templates ARE tracked for contributors
-!.env.example
-!frontend/.env.example
-
-# ------------------------------------------------------------------------------
-# 4. Operating System & IDE Configurations
+# 5. Operating System & Local Editor Junk
 # ------------------------------------------------------------------------------
 # macOS
 .DS_Store
@@ -114,12 +132,7 @@ ehthumbs_vista.db
 [Dd]esktop.ini
 $RECYCLE.BIN/
 
-# Editors & IDEs
-.vscode/*
-!.vscode/settings.json
-!.vscode/tasks.json
-!.vscode/launch.json
-!.vscode/extensions.json
+# Editor Workspace & Temporary Files
 .idea/
 *.swp
 *.swo
@@ -127,18 +140,26 @@ $RECYCLE.BIN/
 *.sublime-workspace
 *.sublime-project
 
+# VS Code (Ignore user workspace state, keep shared settings & tasks)
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+
 # ------------------------------------------------------------------------------
-# 5. Application Logs & Runtime Cache
+# 6. Database, Logs & Runtime Artifacts
 # ------------------------------------------------------------------------------
 *.log
 logs/
 *.pid
 *.seed
 *.pid.lock
+*.sqlite
+*.sqlite3
+*.db
 
-# ------------------------------------------------------------------------------
-# 6. Generated Runtime Reports & Temporary Artifacts
-# ------------------------------------------------------------------------------
+# Local Generated Reports & Scratch Workspace
 *_report.html
 *_report.json
 scratch/
