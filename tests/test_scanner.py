@@ -11,6 +11,7 @@ from aegis.scanner import (
     extract_sentences,
     extract_supporting_evidence,
     find_best_chunk,
+    generate_unsupported_reason,
     load_embedding_model,
     load_scan_input,
     scan_faithfulness,
@@ -423,3 +424,23 @@ def test_scan_faithfulness_supporting_evidence_none_when_empty_chunks():
     assert len(results) == 1
     assert "supporting_evidence" in results[0]
     assert results[0]["supporting_evidence"] is None
+
+
+# --- v3.0.0 Step 1 Tests (Unsupported Reason Generator) ---
+
+def test_generate_unsupported_reason_no_retrieved_chunk():
+    reason = generate_unsupported_reason("POTENTIALLY_UNSUPPORTED", best_chunk=None, similarity=0.0, threshold=0.75)
+    assert reason == "No relevant context was retrieved."
+
+    reason_empty_chunk = generate_unsupported_reason("POTENTIALLY_UNSUPPORTED", best_chunk="", similarity=0.0, threshold=0.75)
+    assert reason_empty_chunk == "No relevant context was retrieved."
+
+
+def test_generate_unsupported_reason_below_threshold():
+    reason = generate_unsupported_reason("POTENTIALLY_UNSUPPORTED", best_chunk="Some chunk context.", similarity=0.45, threshold=0.75)
+    assert reason == "No supporting evidence was found above the similarity threshold."
+
+
+def test_generate_unsupported_reason_supported_returns_none():
+    reason = generate_unsupported_reason("SUPPORTED", best_chunk="Matching chunk.", similarity=0.92, threshold=0.75)
+    assert reason is None

@@ -212,6 +212,36 @@ def classify_sentence(similarity: float, threshold: float = 0.75) -> str:
     return "POTENTIALLY_UNSUPPORTED"
 
 
+def generate_unsupported_reason(
+    status: str,
+    best_chunk: Optional[str] = None,
+    similarity: float = 0.0,
+    threshold: float = 0.75,
+) -> Optional[str]:
+    """
+    Generate a human-readable explanation describing why a sentence is unsupported.
+
+    Args:
+        status (str): Sentence status ("SUPPORTED" or "POTENTIALLY_UNSUPPORTED").
+        best_chunk (Optional[str]): Best matching context chunk, or None if no context exists.
+        similarity (float): Cosine similarity score. Default is 0.0.
+        threshold (float): Configured similarity threshold. Default is 0.75.
+
+    Returns:
+        Optional[str]: Human-readable reason if unsupported, or None if supported.
+    """
+    if status == "SUPPORTED":
+        return None
+
+    if not best_chunk:
+        return "No relevant context was retrieved."
+
+    if similarity < threshold:
+        return "No supporting evidence was found above the similarity threshold."
+
+    return "No supporting evidence was found above the similarity threshold."
+
+
 def scan_faithfulness(
     question: str,
     retrieved_chunks: List[str],
