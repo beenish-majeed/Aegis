@@ -34,7 +34,6 @@ def load_scan_input(path: Union[str, Path]) -> Tuple[str, List[str], str]:
             retrieved_chunks,
             answer
     """
-
     file_path = Path(path)
 
     if not file_path.exists():
@@ -55,6 +54,9 @@ def load_scan_input(path: Union[str, Path]) -> Tuple[str, List[str], str]:
 
     if not isinstance(data["retrieved_chunks"], list):
         raise TypeError("'retrieved_chunks' must be a list.")
+
+    if not all(isinstance(chunk, str) for chunk in data["retrieved_chunks"]):
+        raise TypeError("All items in 'retrieved_chunks' must be strings.")
 
     if not isinstance(data["answer"], str):
         raise TypeError("'answer' must be a string.")
@@ -80,11 +82,17 @@ def encode_texts(
     model_name: str = "all-MiniLM-L6-v2",
 ) -> np.ndarray:
     """Encode a list of text strings into numpy array embeddings."""
-    if not texts:
-        return np.empty((0, 384))
-
     if model is None:
         model = load_embedding_model(model_name)
+
+    if not texts:
+        dim = 0
+        if hasattr(model, "get_sentence_embedding_dimension"):
+            try:
+                dim = model.get_sentence_embedding_dimension()
+            except Exception:
+                dim = 0
+        return np.empty((0, dim))
 
     embeddings = model.encode(texts, convert_to_numpy=True)
     return np.array(embeddings)
@@ -154,9 +162,16 @@ def scan_faithfulness(
     model: Optional[Any] = None,
     model_name: str = "all-MiniLM-L6-v2",
 ) -> List[Dict[str, Any]]:
-    """Orchestrate sentence extraction, similarity matching, and classification for RAG faithfulness audit."""
+    """
+    Orchestrate sentence extraction, similarity matching, and classification for RAG faithfulness audit.
+
+    Note: The `question` parameter is retained in the public API contract for query-context awareness.
+    """
     sentences = extract_sentences(answer)
     results: List[Dict[str, Any]] = []
+
+    if not sentences:
+        return results
 
     if not retrieved_chunks:
         for sentence in sentences:
@@ -172,13 +187,19 @@ def scan_faithfulness(
     if model is None:
         model = load_embedding_model(model_name)
 
-    for sentence in sentences:
-        best_chunk, similarity = find_best_chunk(
-            sentence, retrieved_chunks, model=model, model_name=model_name
-        )
+    # Efficient batch encoding of sentences and retrieved chunks
+    sentences_emb = encode_texts(sentences, model=model)
+    chunks_emb = encode_texts(retrieved_chunks, model=model)
 
-        if best_chunk and best_chunk in retrieved_chunks:
-            chunk_index: Optional[int] = retrieved_chunks.index(best_chunk)
+    sim_matrix = calculate_similarity(sentences_emb, chunks_emb)
+
+    for i, sentence in enumerate(sentences):
+        if sim_matrix.size > 0 and i < sim_matrix.shape[0]:
+            scores = sim_matrix[i]
+            best_idx = int(np.argmax(scores))
+            similarity = float(scores[best_idx])
+            best_chunk = retrieved_chunks[best_idx]
+            chunk_index: Optional[int] = best_idx
         else:
             best_chunk = None
             chunk_index = None

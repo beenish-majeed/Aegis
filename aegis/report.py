@@ -27,6 +27,20 @@ def format_sentence_result(result: Dict[str, Any], index: int = 1) -> str:
     return "\n".join(lines)
 
 
+def compute_scan_summary(results: List[Dict[str, Any]]) -> Dict[str, Any]:
+    """Compute summary metrics for scan results."""
+    total_sentences = len(results)
+    supported = sum(1 for r in results if r.get("status") == "SUPPORTED")
+    potentially_unsupported = total_sentences - supported
+    score = (supported / total_sentences * 100.0) if total_sentences > 0 else 0.0
+    return {
+        "total_sentences": total_sentences,
+        "supported": supported,
+        "potentially_unsupported": potentially_unsupported,
+        "faithfulness_score": round(score, 2),
+    }
+
+
 def format_scan_report(results: List[Dict[str, Any]], question: Optional[str] = None) -> str:
     """Format a full list of scan results into a human-readable report string."""
     header_lines = [
@@ -42,8 +56,9 @@ def format_scan_report(results: List[Dict[str, Any]], question: Optional[str] = 
         header_lines.append("=" * 50)
         return "\n".join(header_lines)
 
-    supported_count = sum(1 for r in results if r.get("status") == "SUPPORTED")
-    total_count = len(results)
+    summary = compute_scan_summary(results)
+    supported_count = summary["supported"]
+    total_count = summary["total_sentences"]
 
     header_lines.append(f"Summary: {supported_count}/{total_count} sentence(s) supported.")
     header_lines.append("-" * 50)
@@ -53,20 +68,6 @@ def format_scan_report(results: List[Dict[str, Any]], question: Optional[str] = 
     footer_lines = ["=" * 50]
 
     return "\n".join(header_lines + ["\n".join(body_blocks)] + footer_lines)
-
-
-def compute_scan_summary(results: List[Dict[str, Any]]) -> Dict[str, Any]:
-    """Compute summary metrics for scan results."""
-    total_sentences = len(results)
-    supported = sum(1 for r in results if r.get("status") == "SUPPORTED")
-    potentially_unsupported = total_sentences - supported
-    score = (supported / total_sentences * 100.0) if total_sentences > 0 else 0.0
-    return {
-        "total_sentences": total_sentences,
-        "supported": supported,
-        "potentially_unsupported": potentially_unsupported,
-        "faithfulness_score": round(score, 2),
-    }
 
 
 def generate_json_report(

@@ -17,7 +17,7 @@ class AegisConfig:
     output_directory: str = DEFAULT_OUTPUT_DIRECTORY
 
     def __post_init__(self) -> None:
-        """Validate configuration parameters upon initialization."""
+        """Validate and clean configuration parameters upon initialization."""
         if not isinstance(self.similarity_threshold, (int, float)) or isinstance(
             self.similarity_threshold, bool
         ):
@@ -34,6 +34,9 @@ class AegisConfig:
 
         if not isinstance(self.output_directory, str) or not self.output_directory.strip():
             raise ValueError("output_directory must be a non-empty string.")
+
+        self.embedding_model = self.embedding_model.strip()
+        self.output_directory = self.output_directory.strip()
 
 
 def load_config(path: Union[str, Path, None] = None) -> AegisConfig:

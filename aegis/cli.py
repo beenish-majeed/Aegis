@@ -6,6 +6,7 @@ from rich.console import Console
 from rich.panel import Panel
 from rich.table import Table
 
+from aegis.report import compute_scan_summary
 from aegis.scanner import load_scan_input, scan_faithfulness
 
 DEFAULT_SIMILARITY_THRESHOLD: float = 0.75
@@ -44,9 +45,6 @@ def display_results_report(
     table.add_column("Similarity", justify="right", style="cyan")
     table.add_column("Best Matching Chunk", style="dim")
 
-    supported_count = 0
-    unsupported_count = 0
-
     for idx, item in enumerate(results, start=1):
         sentence = item.get("sentence", "")
         status = item.get("status", "POTENTIALLY_UNSUPPORTED")
@@ -55,10 +53,8 @@ def display_results_report(
 
         if status == "SUPPORTED":
             status_text = "[bold green]SUPPORTED[/]"
-            supported_count += 1
         else:
             status_text = "[bold red]POTENTIALLY_UNSUPPORTED[/]"
-            unsupported_count += 1
 
         table.add_row(
             str(idx),
@@ -70,16 +66,13 @@ def display_results_report(
 
     console.print(table)
 
-    total_sentences = len(results)
-    faithfulness_score = (
-        (supported_count / total_sentences * 100.0) if total_sentences > 0 else 0.0
-    )
+    summary = compute_scan_summary(results)
 
     summary_table = Table(title="Audit Summary", show_header=False, box=None)
-    summary_table.add_row("[bold]Total Sentences:[/]", str(total_sentences))
-    summary_table.add_row("[bold green]Supported:[/]", str(supported_count))
-    summary_table.add_row("[bold red]Potentially Unsupported:[/]", str(unsupported_count))
-    summary_table.add_row("[bold cyan]Faithfulness Score:[/]", f"{faithfulness_score:.1f}%")
+    summary_table.add_row("[bold]Total Sentences:[/]", str(summary["total_sentences"]))
+    summary_table.add_row("[bold green]Supported:[/]", str(summary["supported"]))
+    summary_table.add_row("[bold red]Potentially Unsupported:[/]", str(summary["potentially_unsupported"]))
+    summary_table.add_row("[bold cyan]Faithfulness Score:[/]", f"{summary['faithfulness_score']:.1f}%")
 
     console.print(Panel(summary_table, title="[bold]Summary[/]", expand=False))
 
@@ -191,12 +184,10 @@ def batch_scan(
                 answer=answer,
                 threshold=threshold,
             )
-            total_sentences = len(results)
-            supported = sum(1 for r in results if r.get("status") == "SUPPORTED")
-            unsupported = total_sentences - supported
-            score = (
-                (supported / total_sentences * 100.0) if total_sentences > 0 else 0.0
-            )
+            summary = compute_scan_summary(results)
+            supported = summary["supported"]
+            unsupported = summary["potentially_unsupported"]
+            score = summary["faithfulness_score"]
 
             successful_scans += 1
             total_score += score

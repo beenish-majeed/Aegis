@@ -1,5 +1,6 @@
 import json
 from pathlib import Path
+from unittest.mock import MagicMock
 
 import numpy as np
 import pytest
@@ -115,6 +116,24 @@ def test_load_scan_input_invalid_types(tmp_path: Path):
                 "question": 123,
                 "retrieved_chunks": "not-a-list",
                 "answer": True,
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    with pytest.raises(TypeError):
+        load_scan_input(sample)
+
+
+def test_load_scan_input_non_string_chunks(tmp_path: Path):
+    sample = tmp_path / "invalid_chunks.json"
+
+    sample.write_text(
+        json.dumps(
+            {
+                "question": "Valid Question",
+                "retrieved_chunks": [123, None],
+                "answer": "Valid Answer",
             }
         ),
         encoding="utf-8",
@@ -290,3 +309,18 @@ def test_scan_faithfulness_empty_answer():
 
     results = scan_faithfulness(question, chunks, answer, model=dummy)
     assert results == []
+
+
+def test_scan_faithfulness_batch_encoding_call_count():
+    """Performance regression test ensuring model.encode is called exactly twice during scan."""
+    mock_model = MagicMock()
+    mock_model.encode.side_effect = lambda texts, convert_to_numpy=True: np.ones((len(texts), 3), dtype=np.float32)
+
+    question = "Test Q?"
+    chunks = ["Chunk 1", "Chunk 2", "Chunk 3"]
+    answer = "Sentence 1. Sentence 2. Sentence 3. Sentence 4."
+
+    scan_faithfulness(question, chunks, answer, model=mock_model)
+
+    # Must be called exactly 2 times (once for sentences batch, once for chunks batch)
+    assert mock_model.encode.call_count == 2
