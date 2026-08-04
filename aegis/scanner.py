@@ -147,6 +147,53 @@ def find_best_chunk(
     return (retrieved_chunks[best_idx], best_score)
 
 
+def extract_supporting_evidence(
+    sentence: str,
+    chunk: Optional[str],
+    threshold: float = 0.75,
+    model: Optional[Any] = None,
+    model_name: str = "all-MiniLM-L6-v2",
+) -> Optional[str]:
+    """
+    Extract the single most supporting sentence from a retrieved chunk for a given answer sentence.
+
+    Args:
+        sentence (str): The answer sentence to find evidence for.
+        chunk (Optional[str]): The retrieved context chunk to search within.
+        threshold (float): Similarity threshold for evidence acceptance. Default is 0.75.
+        model (Optional[Any]): Loaded embedding model instance.
+        model_name (str): Model name identifier for lazy loading if model is None.
+
+    Returns:
+        Optional[str]: The best matching sentence inside the chunk if similarity >= threshold, else None.
+    """
+    if not sentence or not sentence.strip() or not chunk or not chunk.strip():
+        return None
+
+    chunk_sentences = extract_sentences(chunk)
+    if not chunk_sentences:
+        return None
+
+    if model is None:
+        model = load_embedding_model(model_name)
+
+    sentence_emb = encode_texts([sentence], model=model)
+    chunk_sentences_emb = encode_texts(chunk_sentences, model=model)
+
+    sim_matrix = calculate_similarity(sentence_emb, chunk_sentences_emb)
+    if sim_matrix.size == 0:
+        return None
+
+    scores = sim_matrix[0]
+    best_idx = int(np.argmax(scores))
+    best_score = float(scores[best_idx])
+
+    if best_score >= threshold:
+        return chunk_sentences[best_idx]
+
+    return None
+
+
 def classify_sentence(similarity: float, threshold: float = 0.75) -> str:
     """Classify sentence faithfulness as SUPPORTED or POTENTIALLY_UNSUPPORTED based on similarity threshold."""
     if similarity >= threshold:

@@ -9,6 +9,7 @@ from aegis.scanner import (
     classify_sentence,
     encode_texts,
     extract_sentences,
+    extract_supporting_evidence,
     find_best_chunk,
     load_embedding_model,
     load_scan_input,
@@ -324,3 +325,50 @@ def test_scan_faithfulness_batch_encoding_call_count():
 
     # Must be called exactly 2 times (once for sentences batch, once for chunks batch)
     assert mock_model.encode.call_count == 2
+
+
+# --- v2.0.0 Step 1 Tests (Sentence-Level Evidence Extraction) ---
+
+def test_extract_supporting_evidence_found():
+    dummy = DummyEmbeddingModel()
+    sentence = "Paris is in France."
+    chunk = "Berlin is the capital of Germany. Paris is the capital of France. Tokyo is the capital of Japan."
+
+    evidence = extract_supporting_evidence(sentence, chunk, model=dummy)
+    assert evidence == "Paris is the capital of France."
+
+
+def test_extract_supporting_evidence_empty_chunk():
+    dummy = DummyEmbeddingModel()
+    sentence = "Paris is in France."
+
+    assert extract_supporting_evidence(sentence, "", model=dummy) is None
+    assert extract_supporting_evidence(sentence, None, model=dummy) is None
+    assert extract_supporting_evidence("", "Chunk text.", model=dummy) is None
+
+
+def test_extract_supporting_evidence_multiple_sentences():
+    dummy = DummyEmbeddingModel()
+    sentence = "Tokyo is in Japan."
+    chunk = "Paris is in France. Tokyo is the capital of Japan. Berlin is in Germany."
+
+    evidence = extract_supporting_evidence(sentence, chunk, model=dummy)
+    assert evidence == "Tokyo is the capital of Japan."
+
+
+def test_extract_supporting_evidence_best_sentence_selection():
+    dummy = DummyEmbeddingModel()
+    sentence = "Berlin is in Germany."
+    chunk = "Paris is in France. Tokyo is in Japan. Berlin is the capital of Germany."
+
+    evidence = extract_supporting_evidence(sentence, chunk, model=dummy)
+    assert evidence == "Berlin is the capital of Germany."
+
+
+def test_extract_supporting_evidence_below_threshold():
+    dummy = DummyEmbeddingModel()
+    sentence = "Unsupported claim about the moon."
+    chunk = "Tokyo is in Japan. Berlin is in Germany."
+
+    evidence = extract_supporting_evidence(sentence, chunk, threshold=0.75, model=dummy)
+    assert evidence is None
