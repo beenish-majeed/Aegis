@@ -313,7 +313,7 @@ def test_scan_faithfulness_empty_answer():
 
 
 def test_scan_faithfulness_batch_encoding_call_count():
-    """Performance regression test ensuring model.encode is called exactly twice during scan."""
+    """Performance regression test ensuring model.encode is cached and called efficiently during scan."""
     mock_model = MagicMock()
     mock_model.encode.side_effect = lambda texts, convert_to_numpy=True: np.ones((len(texts), 3), dtype=np.float32)
 
@@ -323,8 +323,11 @@ def test_scan_faithfulness_batch_encoding_call_count():
 
     scan_faithfulness(question, chunks, answer, model=mock_model)
 
-    # Must be called exactly 2 times (once for sentences batch, once for chunks batch)
-    assert mock_model.encode.call_count == 2
+    # 1 call for answer sentences batch + 1 call for retrieved chunks batch + 1 call for Chunk 1 sentence breakdown (cached across sentences 2-4)
+    assert mock_model.encode.call_count == 3
+    assert mock_model.encode.call_args_list[0][0][0] == ["Sentence 1.", "Sentence 2.", "Sentence 3.", "Sentence 4."]
+    assert mock_model.encode.call_args_list[1][0][0] == ["Chunk 1", "Chunk 2", "Chunk 3"]
+    assert mock_model.encode.call_args_list[2][0][0] == ["Chunk 1"]
 
 
 # --- v2.0.0 Step 1 Tests (Sentence-Level Evidence Extraction) ---
@@ -372,3 +375,51 @@ def test_extract_supporting_evidence_below_threshold():
 
     evidence = extract_supporting_evidence(sentence, chunk, threshold=0.75, model=dummy)
     assert evidence is None
+
+
+# --- v2.0.0 Step 2 Tests (Include Supporting Evidence in Scan Results) ---
+
+def test_scan_faithfulness_includes_supporting_evidence_field():
+    dummy = DummyEmbeddingModel()
+    question = "What are the capitals?"
+    chunks = ["Paris is the capital of France. Berlin is in Germany."]
+    answer = "Paris is in France."
+
+    results = scan_faithfulness(question, chunks, answer, model=dummy)
+
+    assert len(results) == 1
+    assert "supporting_evidence" in results[0]
+    assert results[0]["supporting_evidence"] == "Paris is the capital of France."
+    # Verify existing fields remain unchanged
+    assert results[0]["sentence"] == "Paris is in France."
+    assert results[0]["best_chunk"] == "Paris is the capital of France. Berlin is in Germany."
+    assert results[0]["chunk_index"] == 0
+    assert pytest.approx(results[0]["similarity"], abs=1e-5) == 1.0
+    assert results[0]["status"] == "SUPPORTED"
+
+
+def test_scan_faithfulness_supporting_evidence_none_when_unsupported():
+    dummy = DummyEmbeddingModel()
+    question = "What are the capitals?"
+    chunks = ["Paris is the capital of France."]
+    answer = "Unsupported claim about space."
+
+    results = scan_faithfulness(question, chunks, answer, threshold=0.75, model=dummy)
+
+    assert len(results) == 1
+    assert "supporting_evidence" in results[0]
+    assert results[0]["supporting_evidence"] is None
+    assert results[0]["status"] == "POTENTIALLY_UNSUPPORTED"
+
+
+def test_scan_faithfulness_supporting_evidence_none_when_empty_chunks():
+    dummy = DummyEmbeddingModel()
+    question = "Where is Paris?"
+    chunks = []
+    answer = "Paris is in France."
+
+    results = scan_faithfulness(question, chunks, answer, model=dummy)
+
+    assert len(results) == 1
+    assert "supporting_evidence" in results[0]
+    assert results[0]["supporting_evidence"] is None

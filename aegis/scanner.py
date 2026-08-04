@@ -153,6 +153,9 @@ def extract_supporting_evidence(
     threshold: float = 0.75,
     model: Optional[Any] = None,
     model_name: str = "all-MiniLM-L6-v2",
+    sentence_emb: Optional[np.ndarray] = None,
+    chunk_sentences_emb: Optional[np.ndarray] = None,
+    chunk_sentences: Optional[List[str]] = None,
 ) -> Optional[str]:
     """
     Extract the single most supporting sentence from a retrieved chunk for a given answer sentence.
@@ -163,6 +166,9 @@ def extract_supporting_evidence(
         threshold (float): Similarity threshold for evidence acceptance. Default is 0.75.
         model (Optional[Any]): Loaded embedding model instance.
         model_name (str): Model name identifier for lazy loading if model is None.
+        sentence_emb (Optional[np.ndarray]): Optional pre-computed embedding matrix for the sentence.
+        chunk_sentences_emb (Optional[np.ndarray]): Optional pre-computed embedding matrix for chunk sentences.
+        chunk_sentences (Optional[List[str]]): Optional pre-segmented list of sentences in chunk.
 
     Returns:
         Optional[str]: The best matching sentence inside the chunk if similarity >= threshold, else None.
@@ -170,15 +176,20 @@ def extract_supporting_evidence(
     if not sentence or not sentence.strip() or not chunk or not chunk.strip():
         return None
 
-    chunk_sentences = extract_sentences(chunk)
+    if chunk_sentences is None:
+        chunk_sentences = extract_sentences(chunk)
+
     if not chunk_sentences:
         return None
 
-    if model is None:
+    if model is None and (sentence_emb is None or chunk_sentences_emb is None):
         model = load_embedding_model(model_name)
 
-    sentence_emb = encode_texts([sentence], model=model)
-    chunk_sentences_emb = encode_texts(chunk_sentences, model=model)
+    if sentence_emb is None:
+        sentence_emb = encode_texts([sentence], model=model)
+
+    if chunk_sentences_emb is None:
+        chunk_sentences_emb = encode_texts(chunk_sentences, model=model)
 
     sim_matrix = calculate_similarity(sentence_emb, chunk_sentences_emb)
     if sim_matrix.size == 0:
@@ -228,6 +239,7 @@ def scan_faithfulness(
                 "chunk_index": None,
                 "similarity": 0.0,
                 "status": classify_sentence(0.0, threshold=threshold),
+                "supporting_evidence": None,
             })
         return results
 
@@ -239,6 +251,9 @@ def scan_faithfulness(
     chunks_emb = encode_texts(retrieved_chunks, model=model)
 
     sim_matrix = calculate_similarity(sentences_emb, chunks_emb)
+
+    # Local cache for chunk sentence segmentations and sentence-level embeddings
+    chunk_sentences_cache: Dict[str, Tuple[List[str], np.ndarray]] = {}
 
     for i, sentence in enumerate(sentences):
         if sim_matrix.size > 0 and i < sim_matrix.shape[0]:
@@ -254,12 +269,34 @@ def scan_faithfulness(
 
         status = classify_sentence(similarity, threshold=threshold)
 
+        if best_chunk and similarity >= threshold:
+            if best_chunk not in chunk_sentences_cache:
+                c_sentences = extract_sentences(best_chunk)
+                c_embs = encode_texts(c_sentences, model=model) if c_sentences else np.empty((0, 0))
+                chunk_sentences_cache[best_chunk] = (c_sentences, c_embs)
+
+            c_sentences, c_embs = chunk_sentences_cache[best_chunk]
+            curr_sentence_emb = sentences_emb[i : i + 1] if i < sentences_emb.shape[0] else None
+
+            supporting_evidence = extract_supporting_evidence(
+                sentence,
+                best_chunk,
+                threshold=threshold,
+                model=model,
+                sentence_emb=curr_sentence_emb,
+                chunk_sentences_emb=c_embs,
+                chunk_sentences=c_sentences,
+            )
+        else:
+            supporting_evidence = None
+
         results.append({
             "sentence": sentence,
             "best_chunk": best_chunk,
             "chunk_index": chunk_index,
             "similarity": similarity,
             "status": status,
+            "supporting_evidence": supporting_evidence,
         })
 
     return results
