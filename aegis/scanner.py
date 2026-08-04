@@ -234,12 +234,9 @@ def generate_unsupported_reason(
         return None
 
     if not best_chunk:
-        return "No relevant context was retrieved."
+        return "No relevant context was retrieved for this answer."
 
-    if similarity < threshold:
-        return "No supporting evidence was found above the similarity threshold."
-
-    return "No supporting evidence was found above the similarity threshold."
+    return "A related context was retrieved, but no supporting evidence met the similarity threshold."
 
 
 def scan_faithfulness(

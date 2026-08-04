@@ -430,15 +430,15 @@ def test_scan_faithfulness_supporting_evidence_none_when_empty_chunks():
 
 def test_generate_unsupported_reason_no_retrieved_chunk():
     reason = generate_unsupported_reason("POTENTIALLY_UNSUPPORTED", best_chunk=None, similarity=0.0, threshold=0.75)
-    assert reason == "No relevant context was retrieved."
+    assert reason == "No relevant context was retrieved for this answer."
 
     reason_empty_chunk = generate_unsupported_reason("POTENTIALLY_UNSUPPORTED", best_chunk="", similarity=0.0, threshold=0.75)
-    assert reason_empty_chunk == "No relevant context was retrieved."
+    assert reason_empty_chunk == "No relevant context was retrieved for this answer."
 
 
 def test_generate_unsupported_reason_below_threshold():
     reason = generate_unsupported_reason("POTENTIALLY_UNSUPPORTED", best_chunk="Some chunk context.", similarity=0.45, threshold=0.75)
-    assert reason == "No supporting evidence was found above the similarity threshold."
+    assert reason == "A related context was retrieved, but no supporting evidence met the similarity threshold."
 
 
 def test_generate_unsupported_reason_supported_returns_none():
@@ -464,7 +464,7 @@ def test_scan_faithfulness_includes_reason_field():
 
     # Unsupported sentence (similarity below threshold)
     assert "reason" in results[1]
-    assert results[1]["reason"] == "No supporting evidence was found above the similarity threshold."
+    assert results[1]["reason"] == "A related context was retrieved, but no supporting evidence met the similarity threshold."
 
 
 def test_scan_faithfulness_reason_no_retrieved_chunks():
@@ -477,4 +477,4 @@ def test_scan_faithfulness_reason_no_retrieved_chunks():
 
     assert len(results) == 1
     assert "reason" in results[0]
-    assert results[0]["reason"] == "No relevant context was retrieved."
+    assert results[0]["reason"] == "No relevant context was retrieved for this answer."
