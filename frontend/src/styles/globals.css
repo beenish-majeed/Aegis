@@ -1,0 +1,21 @@
+@import './tokens.css';
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    background-color: var(--aegis-background);
+    color: var(--aegis-text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* Custom Focus Ring Styles for Accessibility */
+  *:focus-visible {
+    outline: 2px solid var(--aegis-primary);
+    outline-offset: 2px;
+  }
+}
