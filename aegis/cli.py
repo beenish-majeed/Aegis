@@ -17,7 +17,7 @@ app = typer.Typer(
     add_completion=False,
 )
 
-console = Console()
+console = Console(width=120)
 
 
 def display_results_report(
@@ -39,10 +39,11 @@ def display_results_report(
         return
 
     table = Table(title="Sentence Faithfulness Analysis", show_lines=True)
-    table.add_column("#", justify="center", style="bold cyan")
+    table.add_column("#", justify="center", style="bold cyan", no_wrap=True)
     table.add_column("Sentence", style="white")
-    table.add_column("Status", justify="center")
-    table.add_column("Similarity", justify="right", style="cyan")
+    table.add_column("Status", justify="center", no_wrap=True)
+    table.add_column("Similarity", justify="right", style="cyan", no_wrap=True)
+    table.add_column("Confidence", justify="right", style="green", no_wrap=True)
     table.add_column("Best Matching Chunk", style="dim")
     table.add_column("Supporting Evidence", style="italic green")
     table.add_column("Reason", style="yellow")
@@ -51,6 +52,8 @@ def display_results_report(
         sentence = item.get("sentence", "")
         status = item.get("status", "POTENTIALLY_UNSUPPORTED")
         similarity = item.get("similarity", 0.0)
+        conf_val = item.get("confidence")
+        conf_str = f"{conf_val:.2f}" if conf_val is not None else "—"
         best_chunk = item.get("best_chunk") or "None"
         supporting_evidence = item.get("supporting_evidence") or "None"
         reason_val = item.get("reason")
@@ -66,6 +69,7 @@ def display_results_report(
             sentence,
             status_text,
             f"{similarity:.4f}",
+            conf_str,
             best_chunk,
             supporting_evidence,
             reason_str,
