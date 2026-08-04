@@ -444,3 +444,37 @@ def test_generate_unsupported_reason_below_threshold():
 def test_generate_unsupported_reason_supported_returns_none():
     reason = generate_unsupported_reason("SUPPORTED", best_chunk="Matching chunk.", similarity=0.92, threshold=0.75)
     assert reason is None
+
+
+# --- v3.0.0 Step 2 Tests (Include Unsupported Reason in Scan Results) ---
+
+def test_scan_faithfulness_includes_reason_field():
+    dummy = DummyEmbeddingModel()
+    question = "What are the capitals?"
+    chunks = ["Paris is the capital of France."]
+    answer = "Paris is in France. Unsupported claim."
+
+    results = scan_faithfulness(question, chunks, answer, threshold=0.75, model=dummy)
+
+    assert len(results) == 2
+
+    # Supported sentence -> reason is None
+    assert "reason" in results[0]
+    assert results[0]["reason"] is None
+
+    # Unsupported sentence (similarity below threshold)
+    assert "reason" in results[1]
+    assert results[1]["reason"] == "No supporting evidence was found above the similarity threshold."
+
+
+def test_scan_faithfulness_reason_no_retrieved_chunks():
+    dummy = DummyEmbeddingModel()
+    question = "Where is Paris?"
+    chunks = []
+    answer = "Paris is in France."
+
+    results = scan_faithfulness(question, chunks, answer, model=dummy)
+
+    assert len(results) == 1
+    assert "reason" in results[0]
+    assert results[0]["reason"] == "No relevant context was retrieved."

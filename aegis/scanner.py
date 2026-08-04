@@ -263,13 +263,21 @@ def scan_faithfulness(
 
     if not retrieved_chunks:
         for sentence in sentences:
+            status = classify_sentence(0.0, threshold=threshold)
+            reason = generate_unsupported_reason(
+                status=status,
+                best_chunk=None,
+                similarity=0.0,
+                threshold=threshold,
+            )
             results.append({
                 "sentence": sentence,
                 "best_chunk": None,
                 "chunk_index": None,
                 "similarity": 0.0,
-                "status": classify_sentence(0.0, threshold=threshold),
+                "status": status,
                 "supporting_evidence": None,
+                "reason": reason,
             })
         return results
 
@@ -320,6 +328,13 @@ def scan_faithfulness(
         else:
             supporting_evidence = None
 
+        reason = generate_unsupported_reason(
+            status=status,
+            best_chunk=best_chunk,
+            similarity=similarity,
+            threshold=threshold,
+        )
+
         results.append({
             "sentence": sentence,
             "best_chunk": best_chunk,
@@ -327,6 +342,7 @@ def scan_faithfulness(
             "similarity": similarity,
             "status": status,
             "supporting_evidence": supporting_evidence,
+            "reason": reason,
         })
 
     return results
