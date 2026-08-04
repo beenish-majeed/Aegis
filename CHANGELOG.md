@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [3.0.0] - 2026-08-04
+
+### Added
+- **Unsupported Reason Generator**: Added `generate_unsupported_reason()` helper in `aegis/scanner.py` to generate human-readable explanations for unsupported claims.
+- **Scan Result Reason Field**: Extended `scan_faithfulness()` result dictionaries to include the `"reason"` field (`None` for supported sentences, human-readable reason string for unsupported sentences).
+- **CLI Reason Column**: Added `Reason` column to the Rich terminal table in `aegis/cli.py` displaying reasons or `—` (em dash) for supported sentences.
+- **Report Export Integration**: Updated JSON (`generate_json_report`), HTML (`generate_html_report`), and text formatters in `aegis/report.py` to export reasons with safe legacy fallback handling.
+
+### Improved
+- **Refined Unsupported Explanations**: Refined reason messages to distinguish between missing retrieved context ("No relevant context was retrieved for this answer.") and insufficient evidence similarity ("A related context was retrieved, but no supporting evidence met the similarity threshold.").
+
+### Testing
+- Added comprehensive unit tests covering reason generation, scan result schema fields, CLI table output, em dash fallbacks, and report exports.
+
+---
+
 ## [2.0.0] - 2026-08-04
 
 ### Added
