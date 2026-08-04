@@ -33,6 +33,7 @@ def test_cli_scan_valid_file(tmp_path: Path):
             "similarity": 0.95,
             "status": "SUPPORTED",
             "supporting_evidence": "Aegis is an auditor.",
+            "reason": None,
         }
     ]
 
@@ -45,6 +46,7 @@ def test_cli_scan_valid_file(tmp_path: Path):
         assert "Faithfulness Score" in result.output
         assert "Supporting" in result.output
         assert "Evidence" in result.output
+        assert "Reason" in result.output
 
 
 def test_cli_scan_custom_threshold(tmp_path: Path):
@@ -64,6 +66,7 @@ def test_cli_scan_custom_threshold(tmp_path: Path):
             "similarity": 0.70,
             "status": "POTENTIALLY_UNSUPPORTED",
             "supporting_evidence": None,
+            "reason": "No supporting evidence was found above the similarity threshold.",
         }
     ]
 
@@ -90,6 +93,7 @@ def test_display_results_report_summary():
             "similarity": 0.95,
             "status": "SUPPORTED",
             "supporting_evidence": "Matching sentence evidence.",
+            "reason": None,
         },
         {
             "sentence": "Sentence 2 is unsupported.",
@@ -98,6 +102,7 @@ def test_display_results_report_summary():
             "similarity": 0.40,
             "status": "POTENTIALLY_UNSUPPORTED",
             "supporting_evidence": None,
+            "reason": "No supporting evidence was found above the similarity threshold.",
         },
     ]
 
@@ -126,6 +131,7 @@ def test_cli_scan_displays_supporting_evidence(tmp_path: Path):
             "similarity": 0.92,
             "status": "SUPPORTED",
             "supporting_evidence": "Python was created by Guido van Rossum.",
+            "reason": None,
         }
     ]
 
@@ -155,6 +161,7 @@ def test_cli_scan_handles_none_supporting_evidence(tmp_path: Path):
             "similarity": 0.20,
             "status": "POTENTIALLY_UNSUPPORTED",
             "supporting_evidence": None,
+            "reason": "No supporting evidence was found above the similarity threshold.",
         }
     ]
 
@@ -194,6 +201,91 @@ def test_cli_scan_handles_missing_supporting_evidence_key(tmp_path: Path):
         assert "None" in result.output
 
 
+# --- v3.0.0 Step 3 (Display Unsupported Reason in CLI Output) Tests ---
+
+def test_cli_scan_displays_reason(tmp_path: Path):
+    sample_file = tmp_path / "sample.json"
+    data = {
+        "question": "What is Python?",
+        "retrieved_chunks": ["Python is a programming language."],
+        "answer": "Unsupported claim about space travel.",
+    }
+    sample_file.write_text(json.dumps(data), encoding="utf-8")
+
+    dummy_results = [
+        {
+            "sentence": "Unsupported claim about space travel.",
+            "best_chunk": "Python is a programming language.",
+            "chunk_index": 0,
+            "similarity": 0.25,
+            "status": "POTENTIALLY_UNSUPPORTED",
+            "supporting_evidence": None,
+            "reason": "No supporting evidence was found above the similarity threshold.",
+        }
+    ]
+
+    with patch("aegis.cli.scan_faithfulness", return_value=dummy_results):
+        result = runner.invoke(app, ["scan", str(sample_file)])
+        assert result.exit_code == 0
+        assert "Reason" in result.output
+        assert "evidence" in result.output
+        assert "was found" in result.output
+
+
+def test_cli_scan_displays_em_dash_when_reason_is_none(tmp_path: Path):
+    sample_file = tmp_path / "sample.json"
+    data = {
+        "question": "What is Aegis?",
+        "retrieved_chunks": ["Aegis is a RAG auditor."],
+        "answer": "Aegis is a RAG auditor.",
+    }
+    sample_file.write_text(json.dumps(data), encoding="utf-8")
+
+    dummy_results = [
+        {
+            "sentence": "Aegis is a RAG auditor.",
+            "best_chunk": "Aegis is a RAG auditor.",
+            "chunk_index": 0,
+            "similarity": 0.98,
+            "status": "SUPPORTED",
+            "supporting_evidence": "Aegis is a RAG auditor.",
+            "reason": None,
+        }
+    ]
+
+    with patch("aegis.cli.scan_faithfulness", return_value=dummy_results):
+        result = runner.invoke(app, ["scan", str(sample_file)])
+        assert result.exit_code == 0
+        assert "Reason" in result.output
+        assert "—" in result.output
+
+
+def test_cli_scan_handles_missing_reason_key(tmp_path: Path):
+    sample_file = tmp_path / "sample.json"
+    data = {
+        "question": "Legacy test?",
+        "retrieved_chunks": ["Legacy chunk."],
+        "answer": "Legacy answer.",
+    }
+    sample_file.write_text(json.dumps(data), encoding="utf-8")
+
+    legacy_results = [
+        {
+            "sentence": "Legacy answer.",
+            "best_chunk": "Legacy chunk.",
+            "chunk_index": 0,
+            "similarity": 0.90,
+            "status": "SUPPORTED",
+        }
+    ]
+
+    with patch("aegis.cli.scan_faithfulness", return_value=legacy_results):
+        result = runner.invoke(app, ["scan", str(sample_file)])
+        assert result.exit_code == 0
+        assert "Reason" in result.output
+        assert "—" in result.output
+
+
 # --- Milestone 9 (Batch Scanning) Tests ---
 
 def test_batch_scan_nonexistent_directory():
@@ -226,6 +318,7 @@ def test_batch_scan_single_json_file(tmp_path: Path):
             "similarity": 0.95,
             "status": "SUPPORTED",
             "supporting_evidence": "Aegis is an auditor.",
+            "reason": None,
         }
     ]
 
@@ -244,7 +337,7 @@ def test_batch_scan_multiple_json_files(tmp_path: Path):
     (tmp_path / "file2.json").write_text(json.dumps(data2), encoding="utf-8")
 
     dummy_results = [
-        {"sentence": "A.", "best_chunk": "C.", "chunk_index": 0, "similarity": 0.9, "status": "SUPPORTED", "supporting_evidence": "C."}
+        {"sentence": "A.", "best_chunk": "C.", "chunk_index": 0, "similarity": 0.9, "status": "SUPPORTED", "supporting_evidence": "C.", "reason": None}
     ]
 
     with patch("aegis.cli.scan_faithfulness", return_value=dummy_results):
@@ -273,7 +366,7 @@ def test_batch_scan_mixture_valid_and_invalid(tmp_path: Path):
     invalid_file.write_text("{broken", encoding="utf-8")
 
     dummy_results = [
-        {"sentence": "A.", "best_chunk": "C.", "chunk_index": 0, "similarity": 0.9, "status": "SUPPORTED", "supporting_evidence": "C."}
+        {"sentence": "A.", "best_chunk": "C.", "chunk_index": 0, "similarity": 0.9, "status": "SUPPORTED", "supporting_evidence": "C.", "reason": None}
     ]
 
     with patch("aegis.cli.scan_faithfulness", return_value=dummy_results):
@@ -297,7 +390,7 @@ def test_batch_scan_recursive_directory(tmp_path: Path):
     file2.write_text(json.dumps(data), encoding="utf-8")
 
     dummy_results = [
-        {"sentence": "A.", "best_chunk": "C.", "chunk_index": 0, "similarity": 0.9, "status": "SUPPORTED", "supporting_evidence": "C."}
+        {"sentence": "A.", "best_chunk": "C.", "chunk_index": 0, "similarity": 0.9, "status": "SUPPORTED", "supporting_evidence": "C.", "reason": None}
     ]
 
     with patch("aegis.cli.scan_faithfulness", return_value=dummy_results):
@@ -316,7 +409,7 @@ def test_batch_scan_non_json_files_ignored(tmp_path: Path):
     json_file.write_text(json.dumps(data), encoding="utf-8")
 
     dummy_results = [
-        {"sentence": "A.", "best_chunk": "C.", "chunk_index": 0, "similarity": 0.9, "status": "SUPPORTED", "supporting_evidence": "C."}
+        {"sentence": "A.", "best_chunk": "C.", "chunk_index": 0, "similarity": 0.9, "status": "SUPPORTED", "supporting_evidence": "C.", "reason": None}
     ]
 
     with patch("aegis.cli.scan_faithfulness", return_value=dummy_results):
@@ -333,7 +426,7 @@ def test_batch_scan_summary_statistics(tmp_path: Path):
     (tmp_path / "f2.json").write_text(json.dumps(data2), encoding="utf-8")
 
     dummy_results = [
-        {"sentence": "A.", "best_chunk": "C.", "chunk_index": 0, "similarity": 0.9, "status": "SUPPORTED", "supporting_evidence": "C."}
+        {"sentence": "A.", "best_chunk": "C.", "chunk_index": 0, "similarity": 0.9, "status": "SUPPORTED", "supporting_evidence": "C.", "reason": None}
     ]
 
     with patch("aegis.cli.scan_faithfulness", return_value=dummy_results):
