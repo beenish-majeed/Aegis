@@ -9,12 +9,14 @@ def format_sentence_result(result: Dict[str, Any], index: int = 1) -> str:
     sentence = result.get("sentence", "")
     status = result.get("status", "UNKNOWN")
     similarity = result.get("similarity", 0.0)
+    confidence = result.get("confidence")
     best_chunk = result.get("best_chunk")
     chunk_index = result.get("chunk_index")
     supporting_evidence = result.get("supporting_evidence")
     reason = result.get("reason")
 
     sim_str = f"{similarity:.4f}"
+    conf_str = f"{confidence:.2f}" if confidence is not None else "—"
     chunk_str = f"{best_chunk}" if best_chunk is not None else "None"
     index_str = f"{chunk_index}" if chunk_index is not None else "None"
     evidence_str = f"{supporting_evidence}" if supporting_evidence is not None else "None"
@@ -25,6 +27,7 @@ def format_sentence_result(result: Dict[str, Any], index: int = 1) -> str:
         f"  Sentence: {sentence}",
         f"  Status: {status}",
         f"  Similarity: {sim_str}",
+        f"  Confidence: {conf_str}",
         f"  Best Chunk: {chunk_str}",
         f"  Chunk Index: {index_str}",
         f"  Supporting Evidence: {evidence_str}",
@@ -92,6 +95,8 @@ def generate_json_report(
             res_copy["supporting_evidence"] = None
         if "reason" not in res_copy:
             res_copy["reason"] = None
+        if "confidence" not in res_copy:
+            res_copy["confidence"] = None
         sanitized_results.append(res_copy)
 
     report_data = {
@@ -125,6 +130,10 @@ def generate_html_report(
         status = html.escape(r.get("status", "POTENTIALLY_UNSUPPORTED"))
         sim = r.get("similarity", 0.0)
         sim_str = f"{sim:.4f}"
+        confidence = r.get("confidence")
+        conf_str = (
+            f"{confidence:.2f}" if confidence is not None else "—"
+        )
         best_chunk = r.get("best_chunk")
         best_chunk_str = (
             html.escape(best_chunk) if best_chunk is not None else "<em>None</em>"
@@ -148,6 +157,7 @@ def generate_html_report(
             f"<td>{sentence}</td>"
             f'<td><span class="badge {status_class}">{status}</span></td>'
             f"<td>{sim_str}</td>"
+            f"<td>{conf_str}</td>"
             f"<td>{best_chunk_str}</td>"
             f"<td>{evidence_str}</td>"
             f"<td>{reason_str}</td>"
@@ -157,7 +167,7 @@ def generate_html_report(
     table_body = (
         "\n".join(rows_html)
         if rows_html
-        else "<tr><td colspan='7'>No sentences analyzed.</td></tr>"
+        else "<tr><td colspan='8'>No sentences analyzed.</td></tr>"
     )
 
     html_content = f"""<!DOCTYPE html>
@@ -281,6 +291,7 @@ def generate_html_report(
                 <th>Sentence</th>
                 <th>Status</th>
                 <th>Similarity</th>
+                <th>Confidence</th>
                 <th>Best Matching Chunk</th>
                 <th>Supporting Evidence</th>
                 <th>Reason</th>
