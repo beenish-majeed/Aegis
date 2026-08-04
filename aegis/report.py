@@ -12,11 +12,13 @@ def format_sentence_result(result: Dict[str, Any], index: int = 1) -> str:
     best_chunk = result.get("best_chunk")
     chunk_index = result.get("chunk_index")
     supporting_evidence = result.get("supporting_evidence")
+    reason = result.get("reason")
 
     sim_str = f"{similarity:.4f}"
     chunk_str = f"{best_chunk}" if best_chunk is not None else "None"
     index_str = f"{chunk_index}" if chunk_index is not None else "None"
     evidence_str = f"{supporting_evidence}" if supporting_evidence is not None else "None"
+    reason_str = reason if reason is not None else "—"
 
     lines = [
         f"Sentence {index}:",
@@ -26,6 +28,7 @@ def format_sentence_result(result: Dict[str, Any], index: int = 1) -> str:
         f"  Best Chunk: {chunk_str}",
         f"  Chunk Index: {index_str}",
         f"  Supporting Evidence: {evidence_str}",
+        f"  Reason: {reason_str}",
     ]
     return "\n".join(lines)
 
@@ -87,6 +90,8 @@ def generate_json_report(
         res_copy = dict(r)
         if "supporting_evidence" not in res_copy:
             res_copy["supporting_evidence"] = None
+        if "reason" not in res_copy:
+            res_copy["reason"] = None
         sanitized_results.append(res_copy)
 
     report_data = {
@@ -130,6 +135,10 @@ def generate_html_report(
             if supporting_evidence is not None
             else "<em>None</em>"
         )
+        reason = r.get("reason")
+        reason_str = (
+            html.escape(reason) if reason is not None else "—"
+        )
 
         status_class = "supported" if status == "SUPPORTED" else "unsupported"
 
@@ -141,13 +150,14 @@ def generate_html_report(
             f"<td>{sim_str}</td>"
             f"<td>{best_chunk_str}</td>"
             f"<td>{evidence_str}</td>"
+            f"<td>{reason_str}</td>"
             f"</tr>"
         )
 
     table_body = (
         "\n".join(rows_html)
         if rows_html
-        else "<tr><td colspan='6'>No sentences analyzed.</td></tr>"
+        else "<tr><td colspan='7'>No sentences analyzed.</td></tr>"
     )
 
     html_content = f"""<!DOCTYPE html>
@@ -273,6 +283,7 @@ def generate_html_report(
                 <th>Similarity</th>
                 <th>Best Matching Chunk</th>
                 <th>Supporting Evidence</th>
+                <th>Reason</th>
             </tr>
         </thead>
         <tbody>
