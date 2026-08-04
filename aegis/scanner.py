@@ -280,11 +280,13 @@ def scan_faithfulness(
                 similarity=0.0,
                 threshold=threshold,
             )
+            confidence = generate_confidence_score(0.0)
             results.append({
                 "sentence": sentence,
                 "best_chunk": None,
                 "chunk_index": None,
                 "similarity": 0.0,
+                "confidence": confidence,
                 "status": status,
                 "supporting_evidence": None,
                 "reason": reason,
@@ -345,11 +347,14 @@ def scan_faithfulness(
             threshold=threshold,
         )
 
+        confidence = generate_confidence_score(similarity)
+
         results.append({
             "sentence": sentence,
             "best_chunk": best_chunk,
             "chunk_index": chunk_index,
             "similarity": similarity,
+            "confidence": confidence,
             "status": status,
             "supporting_evidence": supporting_evidence,
             "reason": reason,

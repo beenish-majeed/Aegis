@@ -1,6 +1,6 @@
 import json
 from pathlib import Path
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch
 
 import numpy as np
 import pytest
@@ -504,3 +504,63 @@ def test_generate_confidence_score_exactly_zero():
 
 def test_generate_confidence_score_exactly_one():
     assert generate_confidence_score(1.0) == 1.0
+
+
+# --- v4.0.0 Step 2 Tests (Include Confidence Score in Scan Results) ---
+
+def test_scan_faithfulness_includes_confidence_field():
+    dummy = DummyEmbeddingModel()
+    question = "What is the capital of France?"
+    chunks = ["Paris is the capital of France."]
+    answer = "Paris is in France."
+
+    results = scan_faithfulness(question, chunks, answer, model=dummy)
+
+    assert len(results) == 1
+    assert "confidence" in results[0]
+    assert results[0]["confidence"] == generate_confidence_score(results[0]["similarity"])
+    assert pytest.approx(results[0]["confidence"], abs=1e-5) == 1.0
+
+
+def test_scan_faithfulness_confidence_supported_and_unsupported():
+    dummy = DummyEmbeddingModel()
+    question = "What are the capitals?"
+    chunks = ["Paris is the capital of France."]
+    answer = "Paris is in France. Unsupported claim."
+
+    results = scan_faithfulness(question, chunks, answer, threshold=0.75, model=dummy)
+
+    assert len(results) == 2
+
+    # Supported sentence confidence
+    assert "confidence" in results[0]
+    assert results[0]["confidence"] == generate_confidence_score(results[0]["similarity"])
+
+    # Unsupported sentence confidence
+    assert "confidence" in results[1]
+    assert results[1]["confidence"] == generate_confidence_score(results[1]["similarity"])
+
+
+def test_scan_faithfulness_confidence_empty_retrieved_chunks():
+    dummy = DummyEmbeddingModel()
+    question = "Where is Paris?"
+    chunks = []
+    answer = "Paris is in France."
+
+    results = scan_faithfulness(question, chunks, answer, model=dummy)
+
+    assert len(results) == 1
+    assert "confidence" in results[0]
+    assert results[0]["confidence"] == 0.0
+
+
+def test_scan_faithfulness_confidence_reuses_helper():
+    dummy = DummyEmbeddingModel()
+    question = "Where is Paris?"
+    chunks = ["Paris is in France."]
+    answer = "Paris is in France."
+
+    with patch("aegis.scanner.generate_confidence_score", wraps=generate_confidence_score) as mock_helper:
+        results = scan_faithfulness(question, chunks, answer, model=dummy)
+        assert len(results) == 1
+        mock_helper.assert_called_once_with(results[0]["similarity"])
