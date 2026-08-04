@@ -239,6 +239,19 @@ def generate_unsupported_reason(
     return "A related context was retrieved, but no supporting evidence met the similarity threshold."
 
 
+def generate_confidence_score(similarity: float) -> float:
+    """
+    Generate a confidence score clamped to the valid range [0.0, 1.0].
+
+    Args:
+        similarity (float): Cosine similarity score.
+
+    Returns:
+        float: Confidence score clamped between 0.0 and 1.0.
+    """
+    return max(0.0, min(1.0, float(similarity)))
+
+
 def scan_faithfulness(
     question: str,
     retrieved_chunks: List[str],

@@ -11,6 +11,7 @@ from aegis.scanner import (
     extract_sentences,
     extract_supporting_evidence,
     find_best_chunk,
+    generate_confidence_score,
     generate_unsupported_reason,
     load_embedding_model,
     load_scan_input,
@@ -478,3 +479,28 @@ def test_scan_faithfulness_reason_no_retrieved_chunks():
     assert len(results) == 1
     assert "reason" in results[0]
     assert results[0]["reason"] == "No relevant context was retrieved for this answer."
+
+
+# --- v4.0.0 Step 1 Tests (Confidence Score Generator) ---
+
+def test_generate_confidence_score_valid():
+    assert generate_confidence_score(0.42) == 0.42
+    assert generate_confidence_score(0.85) == 0.85
+
+
+def test_generate_confidence_score_below_zero():
+    assert generate_confidence_score(-0.3) == 0.0
+    assert generate_confidence_score(-1.0) == 0.0
+
+
+def test_generate_confidence_score_above_one():
+    assert generate_confidence_score(1.3) == 1.0
+    assert generate_confidence_score(2.5) == 1.0
+
+
+def test_generate_confidence_score_exactly_zero():
+    assert generate_confidence_score(0.0) == 0.0
+
+
+def test_generate_confidence_score_exactly_one():
+    assert generate_confidence_score(1.0) == 1.0
