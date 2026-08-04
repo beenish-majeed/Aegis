@@ -1,16 +1,17 @@
 # Aegis
 
-Aegis is an open-source RAG Faithfulness Auditor.
+An open-source RAG faithfulness auditor that checks whether each sentence in a generated answer is supported by the retrieved context.
 
-It helps AI engineers detect hallucinated or unsupported statements in Retrieval-Augmented Generation (RAG) systems by checking whether every claim in an answer is supported by the retrieved context.
+It helps developers inspect unsupported claims, review supporting evidence, and generate simple faithfulness reports across different RAG applications.
 
-## Vision
+> **Project Status:** Under active development. The README will be expanded as new releases are completed.
 
-Make debugging RAG applications fast, explainable, and framework-agnostic.
+## Roadmap
 
-## MVP Goals
-
-- Detect unsupported claims
-- Highlight supporting evidence
-- Generate faithfulness reports
-- Work with any RAG framework
+| Release | Status |
+|---------|--------|
+| v1.0.0 | Completed |
+| v2.0.0 | Planned |
+| v3.0.0 | Planned |
+| v4.0.0 | Planned |
+| v5.0.0 | Planned |
