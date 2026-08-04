@@ -11,10 +11,12 @@ def format_sentence_result(result: Dict[str, Any], index: int = 1) -> str:
     similarity = result.get("similarity", 0.0)
     best_chunk = result.get("best_chunk")
     chunk_index = result.get("chunk_index")
+    supporting_evidence = result.get("supporting_evidence")
 
     sim_str = f"{similarity:.4f}"
     chunk_str = f"{best_chunk}" if best_chunk is not None else "None"
     index_str = f"{chunk_index}" if chunk_index is not None else "None"
+    evidence_str = f"{supporting_evidence}" if supporting_evidence is not None else "None"
 
     lines = [
         f"Sentence {index}:",
@@ -23,6 +25,7 @@ def format_sentence_result(result: Dict[str, Any], index: int = 1) -> str:
         f"  Similarity: {sim_str}",
         f"  Best Chunk: {chunk_str}",
         f"  Chunk Index: {index_str}",
+        f"  Supporting Evidence: {evidence_str}",
     ]
     return "\n".join(lines)
 
@@ -79,11 +82,18 @@ def generate_json_report(
     path = Path(output_path)
     summary = compute_scan_summary(results)
 
+    sanitized_results = []
+    for r in results:
+        res_copy = dict(r)
+        if "supporting_evidence" not in res_copy:
+            res_copy["supporting_evidence"] = None
+        sanitized_results.append(res_copy)
+
     report_data = {
         "question": question,
         "faithfulness_score": summary["faithfulness_score"],
         "summary": summary,
-        "results": results,
+        "results": sanitized_results,
     }
 
     path.parent.mkdir(parents=True, exist_ok=True)
@@ -114,6 +124,12 @@ def generate_html_report(
         best_chunk_str = (
             html.escape(best_chunk) if best_chunk is not None else "<em>None</em>"
         )
+        supporting_evidence = r.get("supporting_evidence")
+        evidence_str = (
+            html.escape(supporting_evidence)
+            if supporting_evidence is not None
+            else "<em>None</em>"
+        )
 
         status_class = "supported" if status == "SUPPORTED" else "unsupported"
 
@@ -124,13 +140,14 @@ def generate_html_report(
             f'<td><span class="badge {status_class}">{status}</span></td>'
             f"<td>{sim_str}</td>"
             f"<td>{best_chunk_str}</td>"
+            f"<td>{evidence_str}</td>"
             f"</tr>"
         )
 
     table_body = (
         "\n".join(rows_html)
         if rows_html
-        else "<tr><td colspan='5'>No sentences analyzed.</td></tr>"
+        else "<tr><td colspan='6'>No sentences analyzed.</td></tr>"
     )
 
     html_content = f"""<!DOCTYPE html>
@@ -255,6 +272,7 @@ def generate_html_report(
                 <th>Status</th>
                 <th>Similarity</th>
                 <th>Best Matching Chunk</th>
+                <th>Supporting Evidence</th>
             </tr>
         </thead>
         <tbody>

@@ -24,6 +24,7 @@ def test_format_scan_report_single():
             "chunk_index": 0,
             "similarity": 0.95,
             "status": "SUPPORTED",
+            "supporting_evidence": "Paris is the capital of France.",
         }
     ]
     report = format_scan_report(results, question="Where is Paris?")
@@ -35,6 +36,7 @@ def test_format_scan_report_single():
     assert "Similarity: 0.9500" in report
     assert "Best Chunk: Paris is the capital of France." in report
     assert "Chunk Index: 0" in report
+    assert "Supporting Evidence: Paris is the capital of France." in report
 
 
 def test_format_scan_report_multiple():
@@ -45,6 +47,7 @@ def test_format_scan_report_multiple():
             "chunk_index": 0,
             "similarity": 0.95,
             "status": "SUPPORTED",
+            "supporting_evidence": "Paris is the capital of France.",
         },
         {
             "sentence": "Berlin is in Asia.",
@@ -52,6 +55,7 @@ def test_format_scan_report_multiple():
             "chunk_index": 1,
             "similarity": 0.30,
             "status": "POTENTIALLY_UNSUPPORTED",
+            "supporting_evidence": None,
         },
     ]
     report = format_scan_report(results)
@@ -67,10 +71,12 @@ def test_format_scan_report_supported_sentence():
         "chunk_index": 2,
         "similarity": 0.98,
         "status": "SUPPORTED",
+        "supporting_evidence": "Water boils at 100 degrees Celsius.",
     }
     block = format_sentence_result(result, index=1)
     assert "Status: SUPPORTED" in block
     assert "Sentence: Water boils at 100C." in block
+    assert "Supporting Evidence: Water boils at 100 degrees Celsius." in block
 
 
 def test_format_scan_report_unsupported_sentence():
@@ -80,10 +86,12 @@ def test_format_scan_report_unsupported_sentence():
         "chunk_index": 0,
         "similarity": 0.12,
         "status": "POTENTIALLY_UNSUPPORTED",
+        "supporting_evidence": None,
     }
     block = format_sentence_result(result, index=2)
     assert "Status: POTENTIALLY_UNSUPPORTED" in block
     assert "Similarity: 0.1200" in block
+    assert "Supporting Evidence: None" in block
 
 
 def test_format_scan_report_similarity_formatting():
@@ -93,6 +101,7 @@ def test_format_scan_report_similarity_formatting():
         "chunk_index": 0,
         "similarity": 0.123456,
         "status": "SUPPORTED",
+        "supporting_evidence": "Test chunk.",
     }
     block = format_sentence_result(result)
     assert "Similarity: 0.1235" in block
@@ -106,6 +115,7 @@ def test_format_scan_report_best_chunk_formatting():
         "chunk_index": 1,
         "similarity": 0.9,
         "status": "SUPPORTED",
+        "supporting_evidence": "Matching chunk.",
     }
     block1 = format_sentence_result(res1)
     assert "Best Chunk: Matching chunk." in block1
@@ -118,10 +128,12 @@ def test_format_scan_report_best_chunk_formatting():
         "chunk_index": None,
         "similarity": 0.0,
         "status": "POTENTIALLY_UNSUPPORTED",
+        "supporting_evidence": None,
     }
     block2 = format_sentence_result(res2)
     assert "Best Chunk: None" in block2
     assert "Chunk Index: None" in block2
+    assert "Supporting Evidence: None" in block2
 
 
 # --- Direct Unit Tests for compute_scan_summary ---
@@ -169,6 +181,7 @@ def test_generate_json_report_file_creation(tmp_path: Path):
             "chunk_index": 0,
             "similarity": 0.9,
             "status": "SUPPORTED",
+            "supporting_evidence": "Test chunk.",
         }
     ]
     created_path = generate_json_report(results, "Test Question?", output_file)
@@ -185,6 +198,7 @@ def test_generate_json_report_valid_json(tmp_path: Path):
             "chunk_index": 0,
             "similarity": 0.9,
             "status": "SUPPORTED",
+            "supporting_evidence": "Test chunk.",
         }
     ]
     generate_json_report(results, "Test Question?", output_file)
@@ -205,6 +219,7 @@ def test_generate_json_report_summary_correctness(tmp_path: Path):
             "chunk_index": 0,
             "similarity": 0.95,
             "status": "SUPPORTED",
+            "supporting_evidence": "Chunk 1.",
         },
         {
             "sentence": "Unsupported sentence.",
@@ -212,6 +227,7 @@ def test_generate_json_report_summary_correctness(tmp_path: Path):
             "chunk_index": 1,
             "similarity": 0.40,
             "status": "POTENTIALLY_UNSUPPORTED",
+            "supporting_evidence": None,
         },
     ]
     generate_json_report(results, "Test Question?", output_file)
@@ -230,7 +246,7 @@ def test_generate_json_report_score_correctness(tmp_path: Path):
 
     # All supported -> 100%
     results_all = [
-        {"sentence": "S1", "best_chunk": "C1", "chunk_index": 0, "similarity": 0.9, "status": "SUPPORTED"}
+        {"sentence": "S1", "best_chunk": "C1", "chunk_index": 0, "similarity": 0.9, "status": "SUPPORTED", "supporting_evidence": "C1"}
     ]
     generate_json_report(results_all, "Q?", output_file)
     data1 = json.loads(output_file.read_text(encoding="utf-8"))
@@ -246,6 +262,43 @@ def test_generate_json_report_score_correctness(tmp_path: Path):
     assert data2["summary"]["faithfulness_score"] == 0.0
 
 
+def test_generate_json_report_contains_supporting_evidence(tmp_path: Path):
+    output_file = tmp_path / "report_evidence.json"
+    results = [
+        {
+            "sentence": "Guido created Python.",
+            "best_chunk": "Python was created by Guido van Rossum.",
+            "chunk_index": 0,
+            "similarity": 0.92,
+            "status": "SUPPORTED",
+            "supporting_evidence": "Python was created by Guido van Rossum.",
+        }
+    ]
+    generate_json_report(results, "Who created Python?", output_file)
+    data = json.loads(output_file.read_text(encoding="utf-8"))
+
+    assert "supporting_evidence" in data["results"][0]
+    assert data["results"][0]["supporting_evidence"] == "Python was created by Guido van Rossum."
+
+
+def test_generate_json_report_handles_missing_supporting_evidence_key(tmp_path: Path):
+    output_file = tmp_path / "report_legacy.json"
+    legacy_results = [
+        {
+            "sentence": "Legacy sentence.",
+            "best_chunk": "Legacy chunk.",
+            "chunk_index": 0,
+            "similarity": 0.85,
+            "status": "SUPPORTED",
+        }
+    ]
+    generate_json_report(legacy_results, "Legacy Q?", output_file)
+    data = json.loads(output_file.read_text(encoding="utf-8"))
+
+    assert "supporting_evidence" in data["results"][0]
+    assert data["results"][0]["supporting_evidence"] is None
+
+
 # --- Milestone 7 (HTML Report) Tests ---
 
 def test_generate_html_report_file_creation(tmp_path: Path):
@@ -257,6 +310,7 @@ def test_generate_html_report_file_creation(tmp_path: Path):
             "chunk_index": 0,
             "similarity": 0.9,
             "status": "SUPPORTED",
+            "supporting_evidence": "Test chunk.",
         }
     ]
     created_path = generate_html_report(results, "Test Question?", output_file)
@@ -273,6 +327,7 @@ def test_generate_html_report_structure(tmp_path: Path):
             "chunk_index": 0,
             "similarity": 0.9,
             "status": "SUPPORTED",
+            "supporting_evidence": "Test chunk.",
         }
     ]
     generate_html_report(results, "Test Question?", output_file)
@@ -286,8 +341,8 @@ def test_generate_html_report_structure(tmp_path: Path):
 def test_generate_html_report_summary_exists(tmp_path: Path):
     output_file = tmp_path / "report.html"
     results = [
-        {"sentence": "S1", "best_chunk": "C1", "chunk_index": 0, "similarity": 0.9, "status": "SUPPORTED"},
-        {"sentence": "S2", "best_chunk": "C2", "chunk_index": 1, "similarity": 0.3, "status": "POTENTIALLY_UNSUPPORTED"},
+        {"sentence": "S1", "best_chunk": "C1", "chunk_index": 0, "similarity": 0.9, "status": "SUPPORTED", "supporting_evidence": "C1"},
+        {"sentence": "S2", "best_chunk": "C2", "chunk_index": 1, "similarity": 0.3, "status": "POTENTIALLY_UNSUPPORTED", "supporting_evidence": None},
     ]
     generate_html_report(results, "Test Question?", output_file)
 
@@ -306,6 +361,7 @@ def test_generate_html_report_table_exists(tmp_path: Path):
             "chunk_index": 0,
             "similarity": 0.95,
             "status": "SUPPORTED",
+            "supporting_evidence": "Paris is capital.",
         }
     ]
     generate_html_report(results, "Where is Paris?", output_file)
@@ -320,7 +376,7 @@ def test_generate_html_report_table_exists(tmp_path: Path):
 def test_generate_html_report_score_exists(tmp_path: Path):
     output_file = tmp_path / "report.html"
     results = [
-        {"sentence": "S1", "best_chunk": "C1", "chunk_index": 0, "similarity": 0.9, "status": "SUPPORTED"}
+        {"sentence": "S1", "best_chunk": "C1", "chunk_index": 0, "similarity": 0.9, "status": "SUPPORTED", "supporting_evidence": "C1"}
     ]
     generate_html_report(results, "Q?", output_file)
 
@@ -338,6 +394,7 @@ def test_generate_html_report_html_escaping(tmp_path: Path):
             "chunk_index": 0,
             "similarity": 0.9,
             "status": "SUPPORTED",
+            "supporting_evidence": "<i>evidence</i>",
         }
     ]
     generate_html_report(results, "<script>alert('q')</script>", output_file)
@@ -345,7 +402,8 @@ def test_generate_html_report_html_escaping(tmp_path: Path):
     html_content = output_file.read_text(encoding="utf-8")
     assert "<script>alert('q')</script>" not in html_content
     assert "<script>alert('xss')</script>" not in html_content
-    assert "&lt;script&gt;alert(&#x27;q&#x27;)&lt;/script&gt;" in html_content or "&lt;script&gt;" in html_content
+    assert "<i>evidence</i>" not in html_content
+    assert "&lt;i&gt;evidence&lt;/i&gt;" in html_content
 
 
 def test_generate_html_report_empty_results(tmp_path: Path):
@@ -354,3 +412,41 @@ def test_generate_html_report_empty_results(tmp_path: Path):
 
     html_content = output_file.read_text(encoding="utf-8")
     assert "No sentences analyzed." in html_content
+
+
+def test_generate_html_report_displays_supporting_evidence(tmp_path: Path):
+    output_file = tmp_path / "report_evidence.html"
+    results = [
+        {
+            "sentence": "Guido van Rossum created Python.",
+            "best_chunk": "Python was created by Guido van Rossum.",
+            "chunk_index": 0,
+            "similarity": 0.92,
+            "status": "SUPPORTED",
+            "supporting_evidence": "Python was created by Guido van Rossum.",
+        }
+    ]
+    generate_html_report(results, "Who created Python?", output_file)
+    html_content = output_file.read_text(encoding="utf-8")
+
+    assert "<th>Supporting Evidence</th>" in html_content
+    assert "Python was created by Guido van Rossum." in html_content
+
+
+def test_generate_html_report_handles_missing_supporting_evidence(tmp_path: Path):
+    output_file = tmp_path / "report_none_evidence.html"
+    results = [
+        {
+            "sentence": "Unsupported claim.",
+            "best_chunk": "Some chunk.",
+            "chunk_index": 0,
+            "similarity": 0.20,
+            "status": "POTENTIALLY_UNSUPPORTED",
+            "supporting_evidence": None,
+        }
+    ]
+    generate_html_report(results, "Test Q?", output_file)
+    html_content = output_file.read_text(encoding="utf-8")
+
+    assert "<th>Supporting Evidence</th>" in html_content
+    assert "<em>None</em>" in html_content
