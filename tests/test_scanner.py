@@ -11,6 +11,7 @@ from aegis.scanner import (
     extract_sentences,
     extract_supporting_evidence,
     find_best_chunk,
+    generate_confidence_level,
     generate_confidence_score,
     generate_unsupported_reason,
     load_embedding_model,
@@ -561,6 +562,70 @@ def test_scan_faithfulness_confidence_reuses_helper():
     answer = "Paris is in France."
 
     with patch("aegis.scanner.generate_confidence_score", wraps=generate_confidence_score) as mock_helper:
+        results = scan_faithfulness(question, chunks, answer, model=dummy)
+        assert len(results) == 1
+        mock_helper.assert_called_with(results[0]["similarity"])
+
+
+# --- v4.0.0 Step 5 Tests (Confidence Level Labels) ---
+
+def test_generate_confidence_level_ranges():
+    assert generate_confidence_level(0.95) == "Very High"
+    assert generate_confidence_level(0.85) == "High"
+    assert generate_confidence_level(0.60) == "Medium"
+    assert generate_confidence_level(0.40) == "Low"
+    assert generate_confidence_level(0.10) == "Very Low"
+
+
+def test_generate_confidence_level_exact_boundaries():
+    assert generate_confidence_level(0.00) == "Very Low"
+    assert generate_confidence_level(0.25) == "Low"
+    assert generate_confidence_level(0.50) == "Medium"
+    assert generate_confidence_level(0.75) == "High"
+    assert generate_confidence_level(0.90) == "Very High"
+    assert generate_confidence_level(1.00) == "Very High"
+
+
+def test_generate_confidence_level_clamping():
+    # Negative input
+    assert generate_confidence_level(-0.5) == "Very Low"
+    # Input > 1
+    assert generate_confidence_level(1.5) == "Very High"
+
+
+def test_scan_faithfulness_includes_confidence_level_field():
+    dummy = DummyEmbeddingModel()
+    question = "What is the capital of France?"
+    chunks = ["Paris is the capital of France."]
+    answer = "Paris is in France."
+
+    results = scan_faithfulness(question, chunks, answer, model=dummy)
+
+    assert len(results) == 1
+    assert "confidence_level" in results[0]
+    assert results[0]["confidence_level"] == "Very High"
+
+
+def test_scan_faithfulness_confidence_level_empty_retrieved_chunks():
+    dummy = DummyEmbeddingModel()
+    question = "Where is Paris?"
+    chunks = []
+    answer = "Paris is in France."
+
+    results = scan_faithfulness(question, chunks, answer, model=dummy)
+
+    assert len(results) == 1
+    assert "confidence_level" in results[0]
+    assert results[0]["confidence_level"] == "Very Low"
+
+
+def test_scan_faithfulness_confidence_level_reuses_helper():
+    dummy = DummyEmbeddingModel()
+    question = "Where is Paris?"
+    chunks = ["Paris is in France."]
+    answer = "Paris is in France."
+
+    with patch("aegis.scanner.generate_confidence_level", wraps=generate_confidence_level) as mock_helper:
         results = scan_faithfulness(question, chunks, answer, model=dummy)
         assert len(results) == 1
         mock_helper.assert_called_once_with(results[0]["similarity"])

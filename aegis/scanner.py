@@ -252,6 +252,30 @@ def generate_confidence_score(similarity: float) -> float:
     return max(0.0, min(1.0, float(similarity)))
 
 
+def generate_confidence_level(confidence: float) -> str:
+    """
+    Generate a human-readable confidence level label based on confidence score.
+
+    Args:
+        confidence (float): Confidence score (clamped to [0.0, 1.0]).
+
+    Returns:
+        str: Confidence level label ("Very High", "High", "Medium", "Low", "Very Low").
+    """
+    score = generate_confidence_score(confidence)
+
+    if score >= 0.90:
+        return "Very High"
+    elif score >= 0.75:
+        return "High"
+    elif score >= 0.50:
+        return "Medium"
+    elif score >= 0.25:
+        return "Low"
+    else:
+        return "Very Low"
+
+
 def scan_faithfulness(
     question: str,
     retrieved_chunks: List[str],
@@ -281,12 +305,14 @@ def scan_faithfulness(
                 threshold=threshold,
             )
             confidence = generate_confidence_score(0.0)
+            confidence_level = generate_confidence_level(0.0)
             results.append({
                 "sentence": sentence,
                 "best_chunk": None,
                 "chunk_index": None,
                 "similarity": 0.0,
                 "confidence": confidence,
+                "confidence_level": confidence_level,
                 "status": status,
                 "supporting_evidence": None,
                 "reason": reason,
@@ -348,6 +374,7 @@ def scan_faithfulness(
         )
 
         confidence = generate_confidence_score(similarity)
+        confidence_level = generate_confidence_level(similarity)
 
         results.append({
             "sentence": sentence,
@@ -355,6 +382,7 @@ def scan_faithfulness(
             "chunk_index": chunk_index,
             "similarity": similarity,
             "confidence": confidence,
+            "confidence_level": confidence_level,
             "status": status,
             "supporting_evidence": supporting_evidence,
             "reason": reason,

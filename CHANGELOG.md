@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [4.0.0] - 2026-08-04
+
+### Added
+- **Confidence Score Generator**: Added pure `generate_confidence_score()` helper in `aegis/scanner.py` clamping scores to the valid range `[0.0, 1.0]`.
+- **Confidence Level Classifier**: Added pure `generate_confidence_level()` helper in `aegis/scanner.py` mapping confidence scores to human-readable labels (`Very High`, `High`, `Medium`, `Low`, `Very Low`).
+- **CLI Confidence Column**: Added `Confidence` column to Rich terminal tables in `aegis/cli.py` (`scan` and `batch-scan`).
+- **JSON Report Confidence Export**: Exported `confidence` key in JSON audit reports (`generate_json_report`).
+- **HTML Report Confidence Column**: Added `Confidence` table column to standalone HTML reports (`generate_html_report`).
+- **Text Report Confidence Export**: Included `Confidence: <value>` in formatted plain text audit reports (`format_sentence_result`).
+
+### Changed
+- **Improved Report Readability**: Enhanced scan output usability by pairing raw similarity scores with human-readable confidence levels across analysis engines and reporting layers.
+
+---
+
 ## [3.0.0] - 2026-08-04
 
 ### Added
