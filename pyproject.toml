@@ -12,10 +12,17 @@ authors = [
     { name = "Beenish Majeed" }
 ]
 
-dependencies = []
+dependencies = [
+    "fastapi>=0.100.0",
+    "pydantic>=2.0.0",
+    "numpy>=1.20.0"
+]
 
 [project.scripts]
 aegis = "aegis.cli:main"
+
+[tool.vercel]
+entrypoint = "aegis.main:app"
 
 [tool.setuptools.packages.find]
 where = ["."]
