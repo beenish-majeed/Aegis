@@ -137,8 +137,18 @@ def format_faithfulness_report(
     return report
 
 
+@app.get("/")
+def get_root():
+    return {
+        "status": "healthy",
+        "service": "Aegis RAG Faithfulness Auditor API",
+        "version": "0.1.0",
+    }
+
+
 @app.get("/api/health")
 def get_health_status():
+
     uptime_seconds = round(time.time() - START_TIME, 2)
     return {
         "status": "healthy",

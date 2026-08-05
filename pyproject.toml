@@ -21,8 +21,5 @@ dependencies = [
 [project.scripts]
 aegis = "aegis.cli:main"
 
-[tool.vercel]
-entrypoint = "aegis.main:app"
-
 [tool.setuptools.packages.find]
 where = ["."]
