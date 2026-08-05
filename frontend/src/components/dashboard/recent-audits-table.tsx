@@ -14,33 +14,14 @@ export interface RecentAuditsTableProps {
   onSelectScan?: (scanId: string) => void;
 }
 
-const SAMPLE_AUDITS: ScanHistoryItem[] = [
-  {
-    id: 'scan-9021',
-    timestamp: '2026-08-04 18:45:12',
-    question: 'What is the capital of France and its primary GDP contributors?',
-    total_sentences: 7,
-    faithfulness_score: 85.7,
-    status: 'SUPPORTED',
-  },
-  {
-    id: 'scan-9020',
-    timestamp: '2026-08-04 17:30:05',
-    question: 'Explain quantum computing encryption key distribution security.',
-    total_sentences: 12,
-    faithfulness_score: 58.3,
-    status: 'POTENTIALLY_UNSUPPORTED',
-  },
-];
-
 export function RecentAuditsTable({ onSelectScan }: RecentAuditsTableProps) {
   const [search, setSearch] = React.useState('');
   const [statusFilter, setStatusFilter] = React.useState<'ALL' | 'SUPPORTED' | 'POTENTIALLY_UNSUPPORTED'>('ALL');
-  const [audits, setAudits] = React.useState<ScanHistoryItem[]>(SAMPLE_AUDITS);
+  const [audits, setAudits] = React.useState<ScanHistoryItem[]>([]);
 
   React.useEffect(() => {
     reportService.getAllReports().then((reports) => {
-      if (reports && reports.length > 0) {
+      if (reports && Array.isArray(reports)) {
         const historyItems: ScanHistoryItem[] = reports.map((rep) => ({
           id: rep.id,
           timestamp: rep.timestamp,
@@ -53,6 +34,7 @@ export function RecentAuditsTable({ onSelectScan }: RecentAuditsTableProps) {
       }
     });
   }, []);
+
 
   const filteredData = React.useMemo(() => {
     return audits.filter((item) => {
