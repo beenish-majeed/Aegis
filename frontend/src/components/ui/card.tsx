@@ -16,8 +16,8 @@ export const Card = React.forwardRef<HTMLDivElement, CardProps>(
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.25, ease: [0.34, 1.56, 0.64, 1] }}
         className={cn(
-          'bg-aegis-surface border border-aegis-border rounded-large shadow-card overflow-hidden transition-all duration-200',
-          hoverEffect && 'hover:-translate-y-0.5 hover:shadow-md hover:border-indigo-200/80',
+          'bg-aegis-surface border border-aegis-border rounded-large shadow-card overflow-hidden transition-all duration-250',
+          hoverEffect && 'hover:-translate-y-0.5 hover:shadow-floating hover:border-indigo-500/30 dark:hover:border-indigo-400/40 hover:shadow-indigo-500/5',
           className
         )}
         {...(props as any)}
@@ -30,10 +30,10 @@ export const Card = React.forwardRef<HTMLDivElement, CardProps>(
 Card.displayName = 'Card';
 
 export const CardSkeleton = ({ className }: { className?: string }) => (
-  <div className={cn('p-6 bg-white border border-slate-200 rounded-large shadow-card animate-pulse space-y-4', className)}>
-    <div className="h-4 w-1/3 bg-slate-200 rounded" />
-    <div className="h-8 w-1/2 bg-slate-200 rounded" />
-    <div className="h-3 w-2/3 bg-slate-200 rounded" />
+  <div className={cn('p-6 bg-aegis-surface border border-aegis-border rounded-large shadow-card animate-pulse space-y-4', className)}>
+    <div className="h-4 w-1/3 bg-aegis-surface-hover rounded" />
+    <div className="h-8 w-1/2 bg-aegis-surface-hover rounded" />
+    <div className="h-3 w-2/3 bg-aegis-surface-hover rounded" />
   </div>
 );
 
@@ -87,7 +87,7 @@ export const CardFooter = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <div
     ref={ref}
-    className={cn('flex items-center p-6 pt-0 border-t border-aegis-border/40 bg-slate-50/50', className)}
+    className={cn('flex items-center p-6 pt-0 border-t border-aegis-border/40 bg-aegis-surface-subtle', className)}
     {...props}
   />
 ));

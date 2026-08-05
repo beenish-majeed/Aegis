@@ -7,3 +7,15 @@ export function useExecuteScanMutation() {
     mutationFn: (input: ScanInput) => scanService.executeSingleScan(input),
   });
 }
+
+export function useExecuteFileUploadMutation() {
+  return useMutation<FaithfulnessReport, Error, File>({
+    mutationFn: (file: File) => scanService.executeFileUploadScan(file),
+  });
+}
+
+export function useExecuteBatchScanMutation() {
+  return useMutation<FaithfulnessReport[], Error, ScanInput[]>({
+    mutationFn: (inputs: ScanInput[]) => scanService.executeBatchScan(inputs),
+  });
+}

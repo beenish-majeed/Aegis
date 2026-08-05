@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 import { PageContainer } from '@/components/layout/page-container';
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { SearchInput } from '@/components/ui/input';
 import { Blocks, Sparkles } from 'lucide-react';
@@ -67,13 +67,13 @@ export default function PluginsPage() {
               <CardHeader>
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-2">
-                    <Blocks className="w-5 h-5 text-indigo-600" />
+                    <Blocks className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
                     <div>
                       <CardTitle className="text-sm font-bold text-aegis-text">{plugin.name}</CardTitle>
                       <span className="text-[11px] font-semibold text-aegis-muted">{plugin.category}</span>
                     </div>
                   </div>
-                  <Badge variant="medium" className="bg-slate-100 text-slate-700 border-slate-300">
+                  <Badge variant="medium" className="bg-aegis-surface-subtle text-aegis-muted border-aegis-border">
                     <Sparkles className="w-3 h-3 mr-1 text-amber-500" />
                     {plugin.status}
                   </Badge>

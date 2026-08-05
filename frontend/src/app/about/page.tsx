@@ -51,7 +51,7 @@ export default function SystemHealthPage() {
           <Card>
             <CardContent className="p-5">
               <span className="text-[11px] font-bold text-aegis-muted uppercase tracking-wider block">Vector Model</span>
-              <span className="font-mono text-sm font-bold text-slate-800 block mt-1 truncate">
+              <span className="font-mono text-sm font-bold text-aegis-text block mt-1 truncate">
                 {healthData?.model || 'all-MiniLM-L6-v2'}
               </span>
             </CardContent>
@@ -60,7 +60,7 @@ export default function SystemHealthPage() {
           <Card>
             <CardContent className="p-5">
               <span className="text-[11px] font-bold text-aegis-muted uppercase tracking-wider block">Uptime Reliability</span>
-              <span className="font-mono text-xl font-bold text-emerald-600 block mt-1">
+              <span className="font-mono text-xl font-bold text-emerald-600 dark:text-emerald-400 block mt-1">
                 {healthData?.uptime || 99.98}%
               </span>
             </CardContent>
@@ -72,24 +72,24 @@ export default function SystemHealthPage() {
           <Card>
             <CardHeader>
               <CardTitle className="text-base font-bold text-aegis-text flex items-center">
-                <Server className="w-4 h-4 mr-2 text-indigo-600" />
+                <Server className="w-4 h-4 mr-2 text-indigo-600 dark:text-indigo-400" />
                 Backend Infrastructure
               </CardTitle>
               <CardDescription>Python runtime & PyTorch model memory utilization.</CardDescription>
             </CardHeader>
 
             <CardContent className="space-y-4 text-xs font-mono">
-              <div className="flex items-center justify-between p-3 bg-slate-50 border border-slate-200 rounded-medium">
+              <div className="flex items-center justify-between p-3 bg-aegis-surface-subtle border border-aegis-border rounded-medium">
                 <span className="text-aegis-muted">Python Framework:</span>
                 <span className="font-bold text-aegis-text">FastAPI + Pytest</span>
               </div>
 
-              <div className="flex items-center justify-between p-3 bg-slate-50 border border-slate-200 rounded-medium">
+              <div className="flex items-center justify-between p-3 bg-aegis-surface-subtle border border-aegis-border rounded-medium">
                 <span className="text-aegis-muted">Sentence Transformers:</span>
                 <span className="font-bold text-aegis-text">PyTorch / HuggingFace</span>
               </div>
 
-              <div className="flex items-center justify-between p-3 bg-slate-50 border border-slate-200 rounded-medium">
+              <div className="flex items-center justify-between p-3 bg-aegis-surface-subtle border border-aegis-border rounded-medium">
                 <span className="text-aegis-muted">Test Suite Status:</span>
                 <Badge variant="supported">124 PASSED / 0 FAILED</Badge>
               </div>
@@ -99,26 +99,26 @@ export default function SystemHealthPage() {
           <Card>
             <CardHeader>
               <CardTitle className="text-base font-bold text-aegis-text flex items-center">
-                <Activity className="w-4 h-4 mr-2 text-emerald-600" />
+                <Activity className="w-4 h-4 mr-2 text-emerald-600 dark:text-emerald-400" />
                 Latency & Performance
               </CardTitle>
               <CardDescription>Vector similarity computation benchmarks.</CardDescription>
             </CardHeader>
 
             <CardContent className="space-y-4 text-xs font-mono">
-              <div className="flex items-center justify-between p-3 bg-slate-50 border border-slate-200 rounded-medium">
+              <div className="flex items-center justify-between p-3 bg-aegis-surface-subtle border border-aegis-border rounded-medium">
                 <span className="text-aegis-muted">Sentence Embedding Latency:</span>
-                <span className="font-bold text-emerald-600">42ms / 100 sentences</span>
+                <span className="font-bold text-emerald-600 dark:text-emerald-400">42ms / 100 sentences</span>
               </div>
 
-              <div className="flex items-center justify-between p-3 bg-slate-50 border border-slate-200 rounded-medium">
+              <div className="flex items-center justify-between p-3 bg-aegis-surface-subtle border border-aegis-border rounded-medium">
                 <span className="text-aegis-muted">Cosine Matrix Multiply:</span>
-                <span className="font-bold text-emerald-600">&lt; 2ms</span>
+                <span className="font-bold text-emerald-600 dark:text-emerald-400">&lt; 2ms</span>
               </div>
 
-              <div className="flex items-center justify-between p-3 bg-slate-50 border border-slate-200 rounded-medium">
+              <div className="flex items-center justify-between p-3 bg-aegis-surface-subtle border border-aegis-border rounded-medium">
                 <span className="text-aegis-muted">API Response Time (p99):</span>
-                <span className="font-bold text-aegis-primary">112ms</span>
+                <span className="font-bold text-indigo-600 dark:text-indigo-400">112ms</span>
               </div>
             </CardContent>
           </Card>

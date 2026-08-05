@@ -3,6 +3,15 @@ import { FaithfulnessReport } from '@/types/scanner';
 import { MOCK_FAITHFULNESS_REPORT } from '@/data/dashboard/mock-report';
 
 export const reportService = {
+  async getAllReports(): Promise<FaithfulnessReport[]> {
+    try {
+      const response = await apiClient.get<FaithfulnessReport[]>('/api/reports');
+      return response.data;
+    } catch {
+      return [];
+    }
+  },
+
   async getReportById(id: string): Promise<FaithfulnessReport> {
     try {
       const response = await apiClient.get<FaithfulnessReport>(`/api/reports/${id}`);

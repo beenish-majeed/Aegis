@@ -13,13 +13,15 @@ import { LoadingState } from '@/components/ui/states/loading-state';
 import { ErrorState } from '@/components/ui/states/error-state';
 import { EmptyState } from '@/components/ui/states/empty-state';
 import { Zap, Upload, FileText, Trash2, Play, Sparkles } from 'lucide-react';
-import { useExecuteScanMutation } from '@/hooks/api/use-scan-query';
+import { useExecuteScanMutation, useExecuteFileUploadMutation } from '@/hooks/api/use-scan-query';
 import { featureFlags } from '@/config/feature-flags';
 
 export default function SingleScanPage() {
   const router = useRouter();
   const scanMutation = useExecuteScanMutation();
+  const fileUploadMutation = useExecuteFileUploadMutation();
 
+  const fileInputRef = React.useRef<HTMLInputElement | null>(null);
   const [question, setQuestion] = React.useState('');
   const [answer, setAnswer] = React.useState('');
   const [contextInput, setContextInput] = React.useState('');
@@ -91,9 +93,35 @@ export default function SingleScanPage() {
         retrieved_chunks: chunks,
       });
       router.push('/results');
-    } catch {
-      // Fallback transition to results view
+    } catch (err: any) {
+      setValidationError(err.message || 'Failed to execute scan on backend.');
+    }
+  };
+
+  const handleFileUpload = async (file: File) => {
+    if (!file.name.endsWith('.json')) {
+      setValidationError('Invalid file type. Please upload a .json file.');
+      return;
+    }
+
+    setValidationError(null);
+    try {
+      await fileUploadMutation.mutateAsync(file);
       router.push('/results');
+    } catch (err: any) {
+      // Fallback: parse client side if backend connection fails
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        try {
+          const json = JSON.parse(event.target?.result as string);
+          if (json.question) setQuestion(json.question);
+          if (json.answer) setAnswer(json.answer);
+          if (Array.isArray(json.retrieved_chunks)) setChunks(json.retrieved_chunks);
+        } catch {
+          setValidationError('Malformed JSON structure inside uploaded file.');
+        }
+      };
+      reader.readAsText(file);
     }
   };
 
@@ -112,45 +140,24 @@ export default function SingleScanPage() {
     e.stopPropagation();
     setDragActive(false);
     if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-      const file = e.dataTransfer.files[0];
-      if (!file.name.endsWith('.json')) {
-        setValidationError('Invalid file type. Please upload a .json file.');
-        return;
-      }
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        try {
-          const json = JSON.parse(event.target?.result as string);
-          if (json.question) setQuestion(json.question);
-          if (json.answer) setAnswer(json.answer);
-          if (Array.isArray(json.retrieved_chunks)) setChunks(json.retrieved_chunks);
-          setValidationError(null);
-        } catch {
-          setValidationError('Malformed JSON structure inside uploaded file.');
-        }
-      };
-      reader.readAsText(file);
+      handleFileUpload(e.dataTransfer.files[0]);
     }
   };
 
-  if (scanMutation.isPending) {
+  const handleFileInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      handleFileUpload(e.target.files[0]);
+    }
+  };
+
+  const isPending = scanMutation.isPending || fileUploadMutation.isPending;
+
+  if (isPending) {
     return (
       <PageContainer title="Scanning Faithfulness Payload..." description="Running vector embedding alignment & similarity analysis.">
         <LoadingState
           title="Executing Faithfulness Audit"
-          message="Encoding answer sentences against retrieved context vectors using all-MiniLM-L6-v2..."
-        />
-      </PageContainer>
-    );
-  }
-
-  if (scanMutation.isError) {
-    return (
-      <PageContainer title="Single Scan Analyzer" description="Audit execution error">
-        <ErrorState
-          title="Failed to Execute Faithfulness Audit"
-          message={scanMutation.error?.message || 'An API error occurred during sentence encoding.'}
-          onRetry={handleExecuteScan}
+          message="Encoding answer sentences against retrieved context vectors using FastAPI backend with all-MiniLM-L6-v2..."
         />
       </PageContainer>
     );
@@ -177,7 +184,7 @@ export default function SingleScanPage() {
         {/* Left Inputs Section (8 Cols) */}
         <div className="col-span-12 lg:col-span-8 space-y-6">
           {validationError && (
-            <div className="p-3 bg-rose-50 border border-rose-200 rounded-medium text-xs font-semibold text-rose-800">
+            <div className="p-3 bg-rose-500/10 border border-rose-500/20 rounded-medium text-xs font-semibold text-rose-600 dark:text-rose-400">
               {validationError}
             </div>
           )}
@@ -186,7 +193,7 @@ export default function SingleScanPage() {
           <Card>
             <CardHeader>
               <CardTitle className="text-base font-bold text-aegis-text flex items-center">
-                <Zap className="w-4 h-4 mr-2 text-aegis-primary" />
+                <Zap className="w-4 h-4 mr-2 text-indigo-600 dark:text-indigo-400" />
                 Prompt & RAG Answer Payload
               </CardTitle>
               <CardDescription>Input the user prompt question and generated model answer text.</CardDescription>
@@ -234,7 +241,7 @@ export default function SingleScanPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <CardTitle className="text-base font-bold text-aegis-text flex items-center">
-                    <FileText className="w-4 h-4 mr-2 text-indigo-600" />
+                    <FileText className="w-4 h-4 mr-2 text-indigo-600 dark:text-indigo-400" />
                     Retrieved Context Chunks ({chunks.length})
                   </CardTitle>
                   <CardDescription>Add retrieved context passages that were provided to the model.</CardDescription>
@@ -260,17 +267,17 @@ export default function SingleScanPage() {
                   {chunks.map((chunk, idx) => (
                     <div
                       key={idx}
-                      className="flex items-start justify-between p-3 bg-slate-50 border border-slate-200 rounded-medium text-xs group"
+                      className="flex items-start justify-between p-3 bg-aegis-surface-subtle border border-aegis-border rounded-medium text-xs group"
                     >
                       <div className="flex items-start space-x-2 pr-2">
                         <Badge variant="very-high" className="mt-0.5 font-mono">
                           Chunk #{idx + 1}
                         </Badge>
-                        <p className="text-slate-700 leading-relaxed font-mono">{chunk}</p>
+                        <p className="text-aegis-text leading-relaxed font-mono">{chunk}</p>
                       </div>
                       <button
                         onClick={() => handleRemoveChunk(idx)}
-                        className="text-slate-400 hover:text-rose-600 transition-colors p-1"
+                        className="text-aegis-muted hover:text-rose-600 transition-colors p-1"
                         title="Remove chunk"
                       >
                         <Trash2 className="w-3.5 h-3.5" />
@@ -293,35 +300,43 @@ export default function SingleScanPage() {
             </CardHeader>
 
             <CardContent>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept=".json"
+                className="hidden"
+                onChange={handleFileInputChange}
+              />
               <div
+                onClick={() => fileInputRef.current?.click()}
                 onDragEnter={handleDrag}
                 onDragLeave={handleDrag}
                 onDragOver={handleDrag}
                 onDrop={handleDrop}
                 className={`p-6 border-2 border-dashed rounded-large text-center transition-colors cursor-pointer ${
-                  dragActive ? 'border-aegis-primary bg-indigo-50/50' : 'border-slate-300 hover:border-slate-400 bg-slate-50/50'
+                  dragActive ? 'border-aegis-primary bg-indigo-500/10' : 'border-aegis-border hover:border-indigo-500/40 bg-aegis-surface-subtle'
                 }`}
               >
-                <Upload className="w-8 h-8 text-slate-400 mx-auto mb-2" />
-                <p className="text-xs font-bold text-aegis-text">Drop scan.json file here</p>
-                <p className="text-[11px] text-aegis-muted mt-1">Supports standard JSON with question, answer & chunks</p>
+                <Upload className="w-8 h-8 text-aegis-muted mx-auto mb-2" />
+                <p className="text-xs font-bold text-aegis-text">Drop scan.json file here or click to browse</p>
+                <p className="text-[11px] text-aegis-muted mt-1">Sends file directly to FastAPI backend endpoint</p>
               </div>
             </CardContent>
           </Card>
 
           {/* Action Trigger Card */}
-          <Card className="bg-slate-900 text-white border-slate-800">
+          <Card className="bg-aegis-surface border-indigo-500/30 glow-hover">
             <CardContent className="p-5 space-y-4">
               <div>
-                <h3 className="text-sm font-bold">Ready to Audit</h3>
-                <p className="text-xs text-slate-400 mt-0.5">
+                <h3 className="text-sm font-bold text-aegis-text">Ready to Audit</h3>
+                <p className="text-xs text-aegis-muted mt-0.5">
                   Click analyze to segment sentences, encode vectors, and compute similarity metrics.
                 </p>
               </div>
 
               <Button
                 variant="primary"
-                className="w-full h-11 bg-indigo-600 hover:bg-indigo-500 text-white font-bold"
+                className="w-full h-11 bg-indigo-600 hover:bg-indigo-500 text-white font-bold shadow-lg shadow-indigo-500/25"
                 disabled={!question.trim() || !answer.trim() || chunks.length === 0}
                 onClick={handleExecuteScan}
               >

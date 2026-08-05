@@ -48,7 +48,7 @@ export function Sidebar() {
         </Link>
         <button
           onClick={toggleSidebar}
-          className="rounded-small p-1 text-aegis-muted hover:bg-aegis-surface-hover hover:text-aegis-text transition-colors"
+          className="rounded-small p-1.5 text-aegis-muted hover:bg-aegis-surface-hover hover:text-aegis-text transition-colors"
           aria-label="Toggle Navigation Sidebar"
         >
           {isSidebarOpen ? <ChevronLeft className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
@@ -56,7 +56,7 @@ export function Sidebar() {
       </div>
 
       {/* Navigation List */}
-      <nav className="flex-1 space-y-1 p-3 overflow-y-auto">
+      <nav className="flex-1 space-y-1.5 p-3 overflow-y-auto">
         {navItems.map((item) => {
           const isActive = pathname === item.href || (item.href !== '/' && pathname?.startsWith(item.href));
           const Icon = item.icon;
@@ -65,13 +65,13 @@ export function Sidebar() {
               key={item.href}
               href={item.href}
               className={cn(
-                'flex items-center space-x-3 px-3 py-2.5 rounded-small text-sm font-medium transition-colors',
+                'flex items-center space-x-3 px-3 py-2.5 rounded-small text-sm font-medium transition-all duration-200',
                 isActive
-                  ? 'bg-aegis-primary-subtle text-aegis-primary font-semibold'
+                  ? 'bg-indigo-600/10 text-indigo-600 dark:text-indigo-400 font-bold border border-indigo-500/20 shadow-xs'
                   : 'text-aegis-muted hover:bg-aegis-surface-hover hover:text-aegis-text'
               )}
             >
-              <Icon className={cn('h-5 w-5 flex-shrink-0', isActive ? 'text-aegis-primary' : 'text-aegis-muted')} />
+              <Icon className={cn('h-4.5 w-4.5 flex-shrink-0', isActive ? 'text-indigo-600 dark:text-indigo-400' : 'text-aegis-muted')} />
               {isSidebarOpen && <span className="truncate">{item.label}</span>}
             </Link>
           );
@@ -80,12 +80,12 @@ export function Sidebar() {
 
       {/* Footer System Status */}
       {isSidebarOpen && (
-        <div className="p-4 border-t border-aegis-border bg-slate-50/50">
+        <div className="p-4 border-t border-aegis-border bg-aegis-surface-subtle">
           <div className="flex items-center space-x-2">
             <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
-            <span className="text-xs font-semibold text-aegis-text">Engine Active</span>
+            <span className="text-xs font-bold text-aegis-text">Engine Active</span>
           </div>
-          <p className="text-[11px] text-aegis-muted mt-0.5 truncate">
+          <p className="text-[11px] text-aegis-muted mt-0.5 truncate font-mono">
             Model: all-MiniLM-L6-v2
           </p>
         </div>

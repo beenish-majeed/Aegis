@@ -27,15 +27,15 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
     ref
   ) => {
     const baseStyles =
-      'inline-flex items-center justify-center font-medium transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-aegis-primary focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none select-none rounded-small';
+      'inline-flex items-center justify-center font-semibold transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-aegis-primary focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none select-none rounded-small';
 
     const variantStyles = {
       primary:
-        'bg-aegis-primary hover:bg-aegis-primary-hover text-white shadow-sm active:scale-[0.98]',
+        'bg-indigo-600 hover:bg-indigo-500 text-white shadow-md shadow-indigo-500/20 active:scale-[0.98] glow-hover',
       secondary:
-        'bg-aegis-surface hover:bg-aegis-surface-hover text-aegis-text border border-aegis-border shadow-sm active:scale-[0.98]',
+        'bg-aegis-surface hover:bg-aegis-surface-hover text-aegis-text border border-aegis-border hover:border-indigo-400/40 shadow-xs active:scale-[0.98]',
       danger:
-        'bg-aegis-danger-bg hover:bg-red-100 text-aegis-danger border border-aegis-danger-border active:scale-[0.98]',
+        'bg-rose-500/10 hover:bg-rose-500/20 text-rose-600 dark:text-rose-400 border border-rose-200 dark:border-rose-900/60 active:scale-[0.98]',
       ghost:
         'bg-transparent hover:bg-aegis-surface-hover text-aegis-muted hover:text-aegis-text',
     };

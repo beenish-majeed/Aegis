@@ -14,6 +14,24 @@ export interface DashboardMetricsData {
   recommendedAction: string;
 }
 
+export const ZERO_DASHBOARD_METRICS: DashboardMetricsData = {
+  healthScore: 0,
+  riskLevel: 'LOW RISK',
+  confidenceStatus: 'No Data',
+  trendPercentage: 0,
+  faithfulnessScore: 0,
+  totalSentences: 0,
+  supportedCount: 0,
+  unsupportedCount: 0,
+  avgConfidence: 0,
+  threshold: 0.75,
+  summaryText:
+    'No evaluation scans recorded yet in this workspace. Run a single scan or click "Load Demo Data" to populate workspace analytics.',
+  mainFailureReason: 'No scan data evaluated yet in current workspace context.',
+  recommendedAction:
+    'Click "Run First Scan" or "Load Demo Data" to populate RAG observability metrics.',
+};
+
 export const MOCK_DASHBOARD_METRICS: DashboardMetricsData = {
   healthScore: 94.2,
   riskLevel: 'LOW RISK',

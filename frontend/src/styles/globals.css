@@ -8,14 +8,52 @@
   body {
     background-color: var(--aegis-background);
     color: var(--aegis-text);
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    font-family: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* Custom Sleek Scrollbar */
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: var(--aegis-border);
+    border-radius: 9999px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: var(--aegis-muted);
   }
 
   /* Custom Focus Ring Styles for Accessibility */
   *:focus-visible {
     outline: 2px solid var(--aegis-primary);
     outline-offset: 2px;
+  }
+}
+
+@layer utilities {
+  .glow-hover {
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  .glow-hover:hover {
+    box-shadow: var(--aegis-glow);
+    border-color: var(--aegis-border-glow);
+  }
+  
+  .glass-panel {
+    background: var(--aegis-surface);
+    backdrop-filter: blur(8px);
+    border: 1px solid var(--aegis-border);
+  }
+
+  .neon-gradient-text {
+    background: linear-gradient(135deg, #6366F1 0%, #A855F7 50%, #EC4899 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
   }
 }

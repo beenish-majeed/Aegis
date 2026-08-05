@@ -1,5 +1,21 @@
 import { FaithfulnessReport } from '@/types/scanner';
 
+export const EMPTY_FAITHFULNESS_REPORT: FaithfulnessReport = {
+  id: 'empty-scan',
+  timestamp: new Date().toISOString().replace('T', ' ').substring(0, 19),
+  question: 'No prompt analyzed yet',
+  retrieved_chunks: [],
+  answer: 'No model answer evaluated yet',
+  faithfulness_score: 0,
+  summary: {
+    total_sentences: 0,
+    supported: 0,
+    potentially_unsupported: 0,
+    faithfulness_score: 0,
+  },
+  results: [],
+};
+
 export const MOCK_FAITHFULNESS_REPORT: FaithfulnessReport = {
   id: 'scan-9021',
   timestamp: '2026-08-04 18:45:12',

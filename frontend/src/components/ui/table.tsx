@@ -71,7 +71,7 @@ export function Table<T extends Record<string, any>>({
     >
       <div className="overflow-x-auto">
         <table className="w-full text-sm text-left text-aegis-text border-collapse">
-          <thead className="text-xs uppercase bg-slate-50 border-b border-aegis-border text-aegis-muted font-semibold tracking-wider">
+          <thead className="text-xs uppercase bg-aegis-surface-subtle border-b border-aegis-border text-aegis-muted font-semibold tracking-wider">
             <tr>
               {columns.map((col) => (
                 <th
@@ -94,12 +94,12 @@ export function Table<T extends Record<string, any>>({
                   >
                     <span>{col.header}</span>
                     {col.sortable && (
-                      <span className="text-slate-400">
+                      <span className="text-aegis-muted">
                         {sortKey === col.key ? (
                           sortOrder === 'asc' ? (
-                            <ArrowUp className="w-3.5 h-3.5 text-aegis-primary" />
+                            <ArrowUp className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" />
                           ) : (
-                            <ArrowDown className="w-3.5 h-3.5 text-aegis-primary" />
+                            <ArrowDown className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" />
                           )
                         ) : (
                           <ArrowUpDown className="w-3.5 h-3.5 opacity-50" />
@@ -117,7 +117,7 @@ export function Table<T extends Record<string, any>>({
                 <tr key={`skel-${i}`} className="animate-pulse">
                   {columns.map((col) => (
                     <td key={col.key} className="px-4 py-4">
-                      <div className="h-4 bg-slate-200 rounded w-3/4" />
+                      <div className="h-4 bg-aegis-surface-hover rounded w-3/4" />
                     </td>
                   ))}
                 </tr>
@@ -126,7 +126,7 @@ export function Table<T extends Record<string, any>>({
               <tr>
                 <td colSpan={columns.length} className="px-6 py-12 text-center">
                   <div className="flex flex-col items-center justify-center">
-                    <div className="p-3 mb-3 bg-slate-100 rounded-full text-slate-400">
+                    <div className="p-3 mb-3 bg-aegis-surface-subtle rounded-full text-aegis-muted border border-aegis-border">
                       <FolderX className="w-6 h-6" />
                     </div>
                     <p className="text-sm font-semibold text-aegis-text">{emptyTitle}</p>

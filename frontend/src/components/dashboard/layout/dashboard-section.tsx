@@ -41,8 +41,8 @@ export function DashboardSection({
       {isLoading ? (
         <CardSkeleton />
       ) : isEmpty ? (
-        <div className="flex flex-col items-center justify-center p-8 text-center bg-white border border-dashed border-slate-300 rounded-large">
-          <div className="p-3 mb-2 bg-slate-100 rounded-full text-slate-400">
+        <div className="flex flex-col items-center justify-center p-8 text-center bg-aegis-surface border border-dashed border-aegis-border rounded-large">
+          <div className="p-3 mb-2 bg-aegis-surface-subtle rounded-full text-aegis-muted border border-aegis-border">
             <FolderX className="w-5 h-5" />
           </div>
           <h3 className="text-sm font-bold text-aegis-text">{emptyTitle}</h3>

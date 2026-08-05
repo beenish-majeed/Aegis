@@ -19,7 +19,6 @@ import {
   ChevronRight,
   Copy,
   Check,
-  Download,
 } from 'lucide-react';
 import { SentenceResult } from '@/types/scanner';
 
@@ -51,9 +50,9 @@ export const StickyInspectorPanel = React.memo(function StickyInspectorPanel({
 
   if (!sentence) {
     return (
-      <Card hoverEffect={false} className="sticky top-6 border border-dashed border-slate-300 bg-white/80 shadow-card">
+      <Card hoverEffect={false} className="sticky top-6 border border-dashed border-aegis-border bg-aegis-surface shadow-card">
         <CardContent className="p-8 text-center flex flex-col items-center justify-center min-h-[440px]">
-          <div className="p-3.5 mb-3 bg-slate-100 rounded-full text-slate-400">
+          <div className="p-3.5 mb-3 bg-aegis-surface-subtle rounded-full text-aegis-muted border border-aegis-border">
             <EyeOff className="w-6 h-6" />
           </div>
           <h3 className="text-sm font-bold text-aegis-text">No Finding Selected</h3>
@@ -88,15 +87,15 @@ export const StickyInspectorPanel = React.memo(function StickyInspectorPanel({
         transition={{ duration: 0.2 }}
         className="sticky top-6"
       >
-        <Card hoverEffect={false} className={`border shadow-md overflow-hidden transition-all ${isSupported ? 'border-slate-200 bg-white' : 'border-rose-200 bg-white'}`}>
+        <Card hoverEffect={false} className={`border shadow-md overflow-hidden transition-all ${isSupported ? 'border-aegis-border bg-aegis-surface' : 'border-rose-500/30 bg-aegis-surface'}`}>
           {/* Inspector Header with Finding Counter Navigation */}
-          <CardHeader className={`pb-3 border-b ${isSupported ? 'border-slate-100 bg-slate-50/60' : 'border-rose-100 bg-rose-50/40'} flex flex-col space-y-2`}>
+          <CardHeader className={`pb-3 border-b ${isSupported ? 'border-aegis-border bg-aegis-surface-subtle' : 'border-rose-500/20 bg-rose-500/5'} flex flex-col space-y-2`}>
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-2">
                 {isSupported ? (
-                  <ShieldCheck className="w-5 h-5 text-emerald-600 flex-shrink-0" />
+                  <ShieldCheck className="w-5 h-5 text-emerald-600 dark:text-emerald-400 flex-shrink-0" />
                 ) : (
-                  <ShieldAlert className="w-5 h-5 text-rose-600 flex-shrink-0" />
+                  <ShieldAlert className="w-5 h-5 text-rose-600 dark:text-rose-400 flex-shrink-0" />
                 )}
                 <div>
                   <CardTitle className="text-sm font-bold text-aegis-text">Diagnostic Workspace</CardTitle>
@@ -150,7 +149,7 @@ export const StickyInspectorPanel = React.memo(function StickyInspectorPanel({
 
           <CardContent className="p-5 space-y-4 max-h-[calc(100vh-160px)] overflow-y-auto">
             {/* 1. Confidence & Similarity Metric Chips */}
-            <div className="grid grid-cols-3 gap-2 p-3 bg-slate-50 rounded-medium border border-slate-200 text-xs">
+            <div className="grid grid-cols-3 gap-2 p-3 bg-aegis-surface-subtle rounded-medium border border-aegis-border text-xs">
               <div>
                 <span className="text-[10px] font-bold text-aegis-muted uppercase tracking-wider block">Status</span>
                 <Badge variant={isSupported ? 'supported' : 'unsupported'} className="mt-1">
@@ -167,7 +166,7 @@ export const StickyInspectorPanel = React.memo(function StickyInspectorPanel({
 
               <div>
                 <span className="text-[10px] font-bold text-aegis-muted uppercase tracking-wider block">Similarity</span>
-                <span className="font-mono text-sm font-extrabold text-aegis-primary block mt-0.5">
+                <span className="font-mono text-sm font-extrabold text-indigo-600 dark:text-indigo-400 block mt-0.5">
                   {sentence.similarity.toFixed(4)}
                 </span>
               </div>
@@ -177,18 +176,18 @@ export const StickyInspectorPanel = React.memo(function StickyInspectorPanel({
             <div className="space-y-1.5">
               <div className="flex items-center justify-between">
                 <span className="text-[11px] font-bold text-aegis-muted uppercase tracking-wider flex items-center">
-                  <FileText className="w-3.5 h-3.5 mr-1 text-aegis-primary" />
+                  <FileText className="w-3.5 h-3.5 mr-1 text-indigo-600 dark:text-indigo-400" />
                   Evaluated Claim
                 </span>
                 <button
                   onClick={() => handleCopyText(sentence.sentence, 'sentence')}
-                  className="text-slate-400 hover:text-slate-600 transition-colors p-1"
+                  className="text-aegis-muted hover:text-aegis-text transition-colors p-1"
                   title="Copy claim"
                 >
-                  {copiedField === 'sentence' ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
+                  {copiedField === 'sentence' ? <Check className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
                 </button>
               </div>
-              <div className={`p-3.5 rounded-medium border ${isSupported ? 'bg-slate-50 border-slate-200' : 'bg-rose-50/40 border-rose-200'}`}>
+              <div className={`p-3.5 rounded-medium border ${isSupported ? 'bg-aegis-surface-subtle border-aegis-border' : 'bg-rose-500/10 border-rose-500/20'}`}>
                 <p className="text-xs font-semibold text-aegis-text leading-relaxed italic">
                   "{sentence.sentence}"
                 </p>
@@ -199,58 +198,58 @@ export const StickyInspectorPanel = React.memo(function StickyInspectorPanel({
             <div className="space-y-1.5">
               <div className="flex items-center justify-between">
                 <span className="text-[11px] font-bold text-aegis-muted uppercase tracking-wider flex items-center">
-                  <CheckCircle className="w-3.5 h-3.5 mr-1 text-emerald-600" />
+                  <CheckCircle className="w-3.5 h-3.5 mr-1 text-emerald-600 dark:text-emerald-400" />
                   Supporting Evidence Sentence
                 </span>
                 {sentence.supportingEvidence && (
                   <button
                     onClick={() => handleCopyText(sentence.supportingEvidence || '', 'evidence')}
-                    className="text-slate-400 hover:text-slate-600 transition-colors p-1"
+                    className="text-aegis-muted hover:text-aegis-text transition-colors p-1"
                     title="Copy evidence"
                   >
-                    {copiedField === 'evidence' ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
+                    {copiedField === 'evidence' ? <Check className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
                   </button>
                 )}
               </div>
-              <div className="p-3.5 bg-emerald-50/50 border border-emerald-200 rounded-medium">
-                <p className="text-xs text-emerald-900 font-medium leading-relaxed italic">
+              <div className="p-3.5 bg-emerald-500/10 border border-emerald-500/20 rounded-medium">
+                <p className="text-xs text-emerald-700 dark:text-emerald-300 font-medium leading-relaxed italic">
                   {sentence.supportingEvidence ? `"${sentence.supportingEvidence}"` : '— No sentence-level evidence met similarity threshold —'}
                 </p>
               </div>
             </div>
 
             {/* 4. Collapsible Context Chunk Section */}
-            <div className="space-y-1.5 border-t border-slate-100 pt-3">
+            <div className="space-y-1.5 border-t border-aegis-border pt-3">
               <div className="flex items-center justify-between">
                 <button
                   onClick={() => setIsChunkExpanded(!isChunkExpanded)}
                   className="flex items-center space-x-1 text-left focus:outline-none"
                 >
-                  <ArrowRight className="w-3.5 h-3.5 text-indigo-600" />
+                  <ArrowRight className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" />
                   <span className="text-[11px] font-bold text-aegis-muted uppercase tracking-wider">
                     Retrieved Context Chunk
                   </span>
                   {isChunkExpanded ? (
-                    <ChevronUp className="w-3.5 h-3.5 text-slate-400 ml-1" />
+                    <ChevronUp className="w-3.5 h-3.5 text-aegis-muted ml-1" />
                   ) : (
-                    <ChevronDown className="w-3.5 h-3.5 text-slate-400 ml-1" />
+                    <ChevronDown className="w-3.5 h-3.5 text-aegis-muted ml-1" />
                   )}
                 </button>
 
                 {sentence.best_chunk && (
                   <button
                     onClick={() => handleCopyText(sentence.best_chunk || '', 'chunk')}
-                    className="text-slate-400 hover:text-slate-600 transition-colors p-1"
+                    className="text-aegis-muted hover:text-aegis-text transition-colors p-1"
                     title="Copy context chunk"
                   >
-                    {copiedField === 'chunk' ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
+                    {copiedField === 'chunk' ? <Check className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
                   </button>
                 )}
               </div>
 
               {isChunkExpanded && (
-                <div className="p-3.5 bg-slate-50 border border-slate-200 rounded-medium max-h-48 overflow-y-auto">
-                  <p className="text-xs text-slate-700 leading-relaxed font-mono whitespace-pre-wrap">
+                <div className="p-3.5 bg-aegis-surface-subtle border border-aegis-border rounded-medium max-h-48 overflow-y-auto">
+                  <p className="text-xs text-aegis-text leading-relaxed font-mono whitespace-pre-wrap">
                     {sentence.best_chunk || 'No context chunk retrieved.'}
                   </p>
                 </div>
@@ -259,12 +258,12 @@ export const StickyInspectorPanel = React.memo(function StickyInspectorPanel({
 
             {/* 5. Classification Reason */}
             {!isSupported && sentence.reason && (
-              <div className="p-3.5 bg-amber-50 border border-amber-200 rounded-medium space-y-1">
-                <span className="text-[10px] font-bold text-amber-800 flex items-center uppercase tracking-wider">
-                  <AlertTriangle className="w-3.5 h-3.5 mr-1 text-amber-600" />
+              <div className="p-3.5 bg-amber-500/10 border border-amber-500/20 rounded-medium space-y-1">
+                <span className="text-[10px] font-bold text-amber-600 dark:text-amber-400 flex items-center uppercase tracking-wider">
+                  <AlertTriangle className="w-3.5 h-3.5 mr-1 text-amber-500" />
                   Classification Reason
                 </span>
-                <p className="text-xs text-amber-900 font-medium leading-relaxed">
+                <p className="text-xs text-amber-700 dark:text-amber-300 font-medium leading-relaxed">
                   {sentence.reason}
                 </p>
               </div>

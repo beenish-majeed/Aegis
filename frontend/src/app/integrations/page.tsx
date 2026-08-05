@@ -5,7 +5,7 @@ import { PageContainer } from '@/components/layout/page-container';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Link2, CheckCircle, RefreshCw, Check } from 'lucide-react';
+import { Link2, RefreshCw, Check } from 'lucide-react';
 
 export default function IntegrationsPage() {
   const [testingEndpoint, setTestingEndpoint] = React.useState<string | null>(null);
@@ -50,7 +50,7 @@ export default function IntegrationsPage() {
         <Card>
           <CardHeader>
             <CardTitle className="text-base font-bold text-aegis-text flex items-center">
-              <Link2 className="w-4 h-4 mr-2 text-aegis-primary" />
+              <Link2 className="w-4 h-4 mr-2 text-indigo-600 dark:text-indigo-400" />
               Configured API Endpoints ({integrations.length})
             </CardTitle>
             <CardDescription>Target server endpoints for real-time RAG response auditing.</CardDescription>
@@ -61,7 +61,7 @@ export default function IntegrationsPage() {
               {integrations.map((item) => (
                 <div
                   key={item.name}
-                  className="flex flex-col md:flex-row md:items-center justify-between p-4 bg-slate-50 border border-slate-200 rounded-medium gap-4"
+                  className="flex flex-col md:flex-row md:items-center justify-between p-4 bg-aegis-surface-subtle border border-aegis-border rounded-medium gap-4"
                 >
                   <div>
                     <div className="flex items-center space-x-2">
@@ -69,7 +69,7 @@ export default function IntegrationsPage() {
                       <Badge variant="supported">{item.status}</Badge>
                     </div>
                     <p className="text-xs font-mono text-aegis-muted mt-1">{item.url}</p>
-                    <span className="text-[11px] font-semibold text-slate-500 block mt-0.5">{item.type}</span>
+                    <span className="text-[11px] font-semibold text-aegis-muted block mt-0.5">{item.type}</span>
                   </div>
 
                   <Button
@@ -79,7 +79,7 @@ export default function IntegrationsPage() {
                     onClick={() => handleTestConnection(item.name)}
                   >
                     {testSuccess === item.name ? (
-                      <Check className="w-3.5 h-3.5 mr-1 text-emerald-600" />
+                      <Check className="w-3.5 h-3.5 mr-1 text-emerald-600 dark:text-emerald-400" />
                     ) : (
                       <RefreshCw className="w-3.5 h-3.5 mr-1" />
                     )}

@@ -36,7 +36,7 @@ export default function SettingsPage() {
         <Card>
           <CardHeader>
             <CardTitle className="text-base font-bold text-aegis-text flex items-center">
-              <SettingsIcon className="w-4 h-4 mr-2 text-aegis-primary" />
+              <SettingsIcon className="w-4 h-4 mr-2 text-indigo-600 dark:text-indigo-400" />
               Vector Model & Threshold Settings
             </CardTitle>
             <CardDescription>Configure sentence transformer model and similarity threshold bounds.</CardDescription>
@@ -63,7 +63,7 @@ export default function SettingsPage() {
                 <label className="text-xs font-bold text-aegis-muted uppercase tracking-wider">
                   Cosine Similarity Classification Threshold
                 </label>
-                <span className="font-mono text-xs font-extrabold text-aegis-primary">{threshold}</span>
+                <span className="font-mono text-xs font-extrabold text-indigo-600 dark:text-indigo-400">{threshold}</span>
               </div>
               <input
                 type="range"
@@ -72,7 +72,7 @@ export default function SettingsPage() {
                 step="0.05"
                 value={threshold}
                 onChange={(e) => setThreshold(e.target.value)}
-                className="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-indigo-600"
+                className="w-full h-2 bg-aegis-border rounded-lg appearance-none cursor-pointer accent-indigo-600"
               />
               <p className="text-[11px] text-aegis-muted mt-1">
                 Sentences with similarity below {threshold} are flagged as POTENTIALLY_UNSUPPORTED.
@@ -112,7 +112,7 @@ export default function SettingsPage() {
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
               {Object.entries(featureFlags).map(([flag, enabled]) => (
-                <div key={flag} className="flex items-center justify-between p-3 bg-slate-50 border border-slate-200 rounded-medium">
+                <div key={flag} className="flex items-center justify-between p-3 bg-aegis-surface-subtle border border-aegis-border rounded-medium">
                   <span className="font-bold text-aegis-text capitalize">{flag.replace(/([A-Z])/g, ' $1')}</span>
                   <Badge variant={enabled ? 'supported' : 'unsupported'}>
                     {enabled ? 'ENABLED' : 'DISABLED'}
@@ -124,10 +124,10 @@ export default function SettingsPage() {
         </Card>
 
         {/* Danger Zone */}
-        <Card className="border-rose-200 bg-rose-50/20">
+        <Card className="border-rose-500/30 bg-rose-500/5">
           <CardHeader>
-            <CardTitle className="text-base font-bold text-rose-950 flex items-center">
-              <ShieldAlert className="w-4 h-4 mr-2 text-rose-600" />
+            <CardTitle className="text-base font-bold text-aegis-text flex items-center">
+              <ShieldAlert className="w-4 h-4 mr-2 text-rose-600 dark:text-rose-400" />
               Danger Zone
             </CardTitle>
             <CardDescription>Reset local workspace configurations and cache stores.</CardDescription>

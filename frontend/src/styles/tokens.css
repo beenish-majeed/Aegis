@@ -1,57 +1,59 @@
 :root {
   /* ==========================================
-     AEGIS DESIGN SYSTEM - PREMIUM LIGHT-FIRST TOKENS
-     Inspired by Linear, Vercel & Stripe Dashboards
+     AEGIS DESIGN SYSTEM - PREMIUM NEON ACCENT TOKENS
+     Modern Glassmorphism & High Contrast Dark Mode
      ========================================== */
 
   /* Canvas & Base Fills */
-  --aegis-background: #FAFAFA;
+  --aegis-background: #F8FAFC;
   --aegis-surface: #FFFFFF;
-  --aegis-surface-hover: #F4F4F5;
-  --aegis-surface-subtle: #FAFAFA;
-  --aegis-border: #E4E4E7;
-  --aegis-border-subtle: #F4F4F5;
+  --aegis-surface-hover: #F1F5F9;
+  --aegis-surface-subtle: #F8FAFC;
+  --aegis-border: #E2E8F0;
+  --aegis-border-subtle: #F1F5F9;
+  --aegis-border-glow: rgba(99, 102, 241, 0.25);
   
-  /* Primary Brand Tokens (Subtle Slate/Indigo Accent) */
+  /* Primary Brand Tokens (Indigo & Violet Neon Glow) */
   --aegis-primary: #4F46E5;
   --aegis-primary-hover: #4338CA;
-  --aegis-primary-subtle: #F5F3FF;
+  --aegis-primary-subtle: #EEF2FF;
+  --aegis-glow: 0 0 20px -3px rgba(79, 70, 229, 0.2);
   
-  /* Status Fills: Muted, High Contrast, Non-Garish Fills */
-  --aegis-success: #047857;
-  --aegis-success-bg: #F0FDF4;
-  --aegis-success-border: #DCFCE7;
+  /* Status Fills: Crisp High-Contrast Badges */
+  --aegis-success: #059669;
+  --aegis-success-bg: #ECFDF5;
+  --aegis-success-border: #A7F3D0;
   
-  --aegis-warning: #B45309;
+  --aegis-warning: #D97706;
   --aegis-warning-bg: #FFFBEB;
-  --aegis-warning-border: #FEF3C7;
+  --aegis-warning-border: #FDE68A;
   
-  --aegis-danger: #B91C1C;
+  --aegis-danger: #DC2626;
   --aegis-danger-bg: #FEF2F2;
-  --aegis-danger-border: #FEE2E2;
+  --aegis-danger-border: #FECACA;
   
-  /* High-Readability Typography Tokens */
-  --aegis-text: #09090B;
-  --aegis-muted: #71717A;
+  /* Typography Tokens */
+  --aegis-text: #0F172A;
+  --aegis-muted: #64748B;
   --aegis-inverse: #FFFFFF;
 
   /* Spacing Scale */
-  --aegis-space-xs: 0.25rem;  /* 4px */
-  --aegis-space-sm: 0.50rem;  /* 8px */
-  --aegis-space-md: 1.00rem;  /* 16px */
-  --aegis-space-lg: 1.50rem;  /* 24px */
-  --aegis-space-xl: 2.00rem;  /* 32px */
-  --aegis-space-2xl: 3.00rem; /* 48px */
+  --aegis-space-xs: 0.25rem;
+  --aegis-space-sm: 0.50rem;
+  --aegis-space-md: 1.00rem;
+  --aegis-space-lg: 1.50rem;
+  --aegis-space-xl: 2.00rem;
+  --aegis-space-2xl: 3.00rem;
 
   /* Border Radius Scale */
-  --aegis-radius-small: 0.375rem;  /* 6px - Buttons, input fields */
-  --aegis-radius-medium: 0.500rem; /* 8px - Tooltips, dropdowns */
-  --aegis-radius-large: 0.750rem;  /* 12px - Cards, dialog modals */
+  --aegis-radius-small: 0.375rem;
+  --aegis-radius-medium: 0.500rem;
+  --aegis-radius-large: 0.750rem;
 
-  /* Minimal Crisp Shadows (Stripe/Linear Style) */
-  --aegis-shadow-card: 0 1px 2px 0 rgba(0, 0, 0, 0.04);
-  --aegis-shadow-floating: 0 4px 12px -2px rgba(0, 0, 0, 0.06);
-  --aegis-shadow-modal: 0 16px 32px -4px rgba(0, 0, 0, 0.08);
+  /* Crisp Shadows & Soft Glows */
+  --aegis-shadow-card: 0 1px 3px 0 rgba(15, 23, 42, 0.04), 0 1px 2px -1px rgba(15, 23, 42, 0.04);
+  --aegis-shadow-floating: 0 10px 25px -5px rgba(15, 23, 42, 0.08);
+  --aegis-shadow-modal: 0 25px 50px -12px rgba(15, 23, 42, 0.25);
 
   /* Motion Timings */
   --aegis-motion-fast: 150ms;
@@ -60,17 +62,19 @@
 }
 
 [data-theme="dark"] {
-  /* Unchanged Dark Mode Support Architecture */
-  --aegis-background: #09090B;
-  --aegis-surface: #18181B;
-  --aegis-surface-hover: #27272A;
-  --aegis-surface-subtle: #18181B;
-  --aegis-border: #27272A;
-  --aegis-border-subtle: #27272A;
+  /* Modern Slate Dark Theme - No Mismatched Surfaces */
+  --aegis-background: #0B0F19;
+  --aegis-surface: #111827;
+  --aegis-surface-hover: #1F2937;
+  --aegis-surface-subtle: #1F2937;
+  --aegis-border: #1F2937;
+  --aegis-border-subtle: #374151;
+  --aegis-border-glow: rgba(129, 140, 248, 0.35);
   
   --aegis-primary: #6366F1;
   --aegis-primary-hover: #818CF8;
   --aegis-primary-subtle: #1E1B4B;
+  --aegis-glow: 0 0 25px -2px rgba(99, 102, 241, 0.35);
   
   --aegis-success: #34D399;
   --aegis-success-bg: #064E3B;
@@ -84,7 +88,11 @@
   --aegis-danger-bg: #7F1D1D;
   --aegis-danger-border: #B91C1C;
   
-  --aegis-text: #FAFAFA;
-  --aegis-muted: #A1A1AA;
-  --aegis-inverse: #09090B;
+  --aegis-text: #F9FAFB;
+  --aegis-muted: #9CA3AF;
+  --aegis-inverse: #0B0F19;
+
+  --aegis-shadow-card: 0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -2px rgba(0, 0, 0, 0.3);
+  --aegis-shadow-floating: 0 10px 25px -5px rgba(0, 0, 0, 0.5);
+  --aegis-shadow-modal: 0 25px 50px -12px rgba(0, 0, 0, 0.7);
 }

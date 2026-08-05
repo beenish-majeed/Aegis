@@ -42,7 +42,7 @@ export function SentenceInspectorDrawer({
             animate={{ opacity: 0.4 }}
             exit={{ opacity: 0 }}
             onClick={onClose}
-            className="fixed inset-0 bg-slate-900 z-40 backdrop-blur-sm"
+            className="fixed inset-0 bg-black/60 z-40 backdrop-blur-sm"
           />
 
           {/* Side Drawer Panel */}
@@ -51,21 +51,21 @@ export function SentenceInspectorDrawer({
             animate={{ x: 0 }}
             exit={{ x: '100%' }}
             transition={{ type: 'spring', damping: 25, stiffness: 220 }}
-            className="fixed right-0 top-0 bottom-0 w-full max-w-lg bg-white z-50 shadow-2xl border-l border-aegis-border flex flex-col overflow-hidden"
+            className="fixed right-0 top-0 bottom-0 w-full max-w-lg bg-aegis-surface z-50 shadow-2xl border-l border-aegis-border flex flex-col overflow-hidden"
           >
             {/* Drawer Header */}
-            <div className="flex items-center justify-between p-5 border-b border-slate-100 bg-slate-50/50">
+            <div className="flex items-center justify-between p-5 border-b border-aegis-border bg-aegis-surface-subtle">
               <div className="flex items-center space-x-2">
                 {isSupported ? (
-                  <ShieldCheck className="w-5 h-5 text-emerald-600" />
+                  <ShieldCheck className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
                 ) : (
-                  <ShieldAlert className="w-5 h-5 text-rose-600" />
+                  <ShieldAlert className="w-5 h-5 text-rose-600 dark:text-rose-400" />
                 )}
                 <h3 className="text-base font-bold text-aegis-text">Sentence Diagnostic Inspector</h3>
               </div>
               <button
                 onClick={onClose}
-                className="p-1 rounded-small text-aegis-muted hover:bg-slate-200 transition-colors"
+                className="p-1 rounded-small text-aegis-muted hover:bg-aegis-surface-hover transition-colors"
                 aria-label="Close Inspector"
               >
                 <X className="w-5 h-5" />
@@ -75,7 +75,7 @@ export function SentenceInspectorDrawer({
             {/* Drawer Body Scroll */}
             <div className="flex-1 overflow-y-auto p-6 space-y-6">
               {/* Status Header Bar */}
-              <div className="flex items-center justify-between p-3.5 bg-slate-50 border border-slate-200 rounded-medium">
+              <div className="flex items-center justify-between p-3.5 bg-aegis-surface-subtle border border-aegis-border rounded-medium">
                 <div>
                   <span className="text-[10px] font-bold text-aegis-muted uppercase tracking-wider block">Evaluation Status</span>
                   <Badge variant={isSupported ? 'supported' : 'unsupported'} className="mt-0.5">
@@ -92,7 +92,7 @@ export function SentenceInspectorDrawer({
 
                 <div>
                   <span className="text-[10px] font-bold text-aegis-muted uppercase tracking-wider block">Similarity</span>
-                  <span className="font-mono text-sm font-extrabold text-aegis-primary">
+                  <span className="font-mono text-sm font-extrabold text-indigo-600 dark:text-indigo-400">
                     {sentence.similarity.toFixed(4)}
                   </span>
                 </div>
@@ -101,10 +101,10 @@ export function SentenceInspectorDrawer({
               {/* Original Evaluated Sentence */}
               <div className="space-y-2">
                 <h4 className="text-xs font-bold text-aegis-muted uppercase tracking-wider flex items-center">
-                  <FileText className="w-3.5 h-3.5 mr-1 text-aegis-primary" />
+                  <FileText className="w-3.5 h-3.5 mr-1 text-indigo-600 dark:text-indigo-400" />
                   Original Evaluated Sentence
                 </h4>
-                <div className="p-4 bg-slate-50 border border-slate-200 rounded-medium">
+                <div className="p-4 bg-aegis-surface-subtle border border-aegis-border rounded-medium">
                   <p className="text-sm font-semibold text-aegis-text leading-relaxed">
                     "{sentence.sentence}"
                   </p>
@@ -114,11 +114,11 @@ export function SentenceInspectorDrawer({
               {/* Supporting Evidence Match */}
               <div className="space-y-2">
                 <h4 className="text-xs font-bold text-aegis-muted uppercase tracking-wider flex items-center">
-                  <CheckCircle className="w-3.5 h-3.5 mr-1 text-emerald-600" />
+                  <CheckCircle className="w-3.5 h-3.5 mr-1 text-emerald-600 dark:text-emerald-400" />
                   Isolated Supporting Evidence Sentence
                 </h4>
-                <div className="p-4 bg-emerald-50/50 border border-emerald-200 rounded-medium">
-                  <p className="text-xs text-emerald-900 font-medium leading-relaxed italic">
+                <div className="p-4 bg-emerald-500/10 border border-emerald-500/20 rounded-medium">
+                  <p className="text-xs text-emerald-700 dark:text-emerald-300 font-medium leading-relaxed italic">
                     {sentence.supportingEvidence ? `"${sentence.supportingEvidence}"` : '— No sentence-level evidence met similarity threshold —'}
                   </p>
                 </div>
@@ -127,11 +127,11 @@ export function SentenceInspectorDrawer({
               {/* Best Matching Context Chunk */}
               <div className="space-y-2">
                 <h4 className="text-xs font-bold text-aegis-muted uppercase tracking-wider flex items-center">
-                  <ArrowRight className="w-3.5 h-3.5 mr-1 text-indigo-600" />
+                  <ArrowRight className="w-3.5 h-3.5 mr-1 text-indigo-600 dark:text-indigo-400" />
                   Retrieved Context Chunk
                 </h4>
-                <div className="p-4 bg-slate-50 border border-slate-200 rounded-medium">
-                  <p className="text-xs text-slate-700 leading-relaxed font-mono">
+                <div className="p-4 bg-aegis-surface-subtle border border-aegis-border rounded-medium">
+                  <p className="text-xs text-aegis-text leading-relaxed font-mono">
                     {sentence.best_chunk || 'No context chunk was retrieved.'}
                   </p>
                 </div>
@@ -139,12 +139,12 @@ export function SentenceInspectorDrawer({
 
               {/* Reason for Classification */}
               {!isSupported && sentence.reason && (
-                <div className="p-4 bg-amber-50 border border-amber-200 rounded-medium space-y-1">
-                  <span className="text-xs font-bold text-amber-800 flex items-center">
-                    <AlertTriangle className="w-3.5 h-3.5 mr-1 text-amber-600" />
+                <div className="p-4 bg-amber-500/10 border border-amber-500/20 rounded-medium space-y-1">
+                  <span className="text-xs font-bold text-amber-600 dark:text-amber-400 flex items-center">
+                    <AlertTriangle className="w-3.5 h-3.5 mr-1 text-amber-500" />
                     Classification Reason
                   </span>
-                  <p className="text-xs text-amber-900 font-medium leading-relaxed">
+                  <p className="text-xs text-amber-700 dark:text-amber-300 font-medium leading-relaxed">
                     {sentence.reason}
                   </p>
                 </div>
@@ -152,7 +152,7 @@ export function SentenceInspectorDrawer({
             </div>
 
             {/* Drawer Footer Actions */}
-            <div className="p-4 border-t border-slate-200 bg-slate-50/50 flex justify-end">
+            <div className="p-4 border-t border-aegis-border bg-aegis-surface-subtle flex justify-end">
               <Button variant="secondary" onClick={onClose}>
                 Close Inspector
               </Button>
