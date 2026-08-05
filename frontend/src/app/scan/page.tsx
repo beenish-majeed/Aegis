@@ -15,6 +15,54 @@ import { Zap, Upload, FileText, Trash2, Play, Sparkles } from 'lucide-react';
 import { useExecuteScanMutation, useExecuteFileUploadMutation } from '@/hooks/api/use-scan-query';
 import { featureFlags } from '@/config/feature-flags';
 
+function extractScanInputFromClientJson(json: any): { question: string; answer: string; retrieved_chunks: string[] } {
+  if (json.question && json.answer) {
+    const chunks = Array.isArray(json.retrieved_chunks) ? json.retrieved_chunks.map(String) : [String(json.retrieved_chunks || '')];
+    return { question: String(json.question), answer: String(json.answer), retrieved_chunks: chunks };
+  }
+
+  if (json.student && typeof json.student === 'object') {
+    const std = json.student;
+    const name = std.name || 'Student';
+    const prog = std.program || 'Computer Science';
+    const about = std.about || '';
+    const skills = Array.isArray(std.skills) ? std.skills.join(', ') : '';
+    const projects = Array.isArray(std.projects) ? std.projects : [];
+    const achievements = Array.isArray(std.achievements) ? std.achievements : [];
+
+    const question = `Audit academic profile and project faithfulness for ${name} (${prog})`;
+    const answer = `${name} is a ${prog} student at ${std.university || 'University'}. ${about} Skills include ${skills}.`;
+    const chunks = [
+      `${name} is a student enrolled in ${prog} at ${std.university || 'University'} with CGPA ${std.cgpa || '3.95'}.`,
+      `${name} is skilled in ${skills}.`,
+      `About ${name}: ${about}`,
+    ];
+    projects.forEach((p: any) => {
+      if (p && typeof p === 'object') chunks.push(`Project '${p.title}': ${p.description}`);
+    });
+    achievements.forEach((a: any) => chunks.push(`Achievement: ${a}`));
+
+    return { question, answer, retrieved_chunks: chunks };
+  }
+
+  const question = 'Evaluate dataset payload';
+  const chunks: string[] = [];
+  const answerParts: string[] = [];
+
+  Object.entries(json).forEach(([k, v]) => {
+    if (typeof v === 'string' || typeof v === 'number' || typeof v === 'boolean') {
+      answerParts.push(`${k}: ${v}`);
+      chunks.push(`${k} is ${v}.`);
+    } else if (Array.isArray(v)) {
+      answerParts.push(`${k}: ${v.map(String).join(', ')}`);
+      chunks.push(`${k} list contains ${v.length} items.`);
+    }
+  });
+
+  const answer = answerParts.join(' ') || JSON.stringify(json);
+  return { question, answer, retrieved_chunks: chunks.length > 0 ? chunks : [JSON.stringify(json)] };
+}
+
 export default function SingleScanPage() {
   const router = useRouter();
   const scanMutation = useExecuteScanMutation();
@@ -118,19 +166,12 @@ export default function SingleScanPage() {
       reader.onload = async (event) => {
         try {
           const json = JSON.parse(event.target?.result as string);
-          if (json.question && json.answer && Array.isArray(json.retrieved_chunks)) {
-            const fallbackRes = await scanMutation.mutateAsync({
-              question: json.question,
-              answer: json.answer,
-              retrieved_chunks: json.retrieved_chunks,
-            });
-            if (fallbackRes && typeof window !== 'undefined') {
-              localStorage.setItem('aegis_latest_report', JSON.stringify(fallbackRes));
-            }
-            router.push('/results');
-          } else {
-            setValidationError('Malformed JSON structure inside uploaded file.');
+          const parsedInput = extractScanInputFromClientJson(json);
+          const fallbackRes = await scanMutation.mutateAsync(parsedInput);
+          if (fallbackRes && typeof window !== 'undefined') {
+            localStorage.setItem('aegis_latest_report', JSON.stringify(fallbackRes));
           }
+          router.push('/results');
         } catch {
           setValidationError('Malformed JSON structure inside uploaded file.');
         }
@@ -171,7 +212,7 @@ export default function SingleScanPage() {
       <PageContainer title="Scanning Faithfulness Payload..." description="Running vector embedding alignment & similarity analysis.">
         <LoadingState
           title="Executing Faithfulness Audit"
-          message="Encoding answer sentences against retrieved context vectors using FastAPI backend with all-MiniLM-L6-v2..."
+          message="Encoding answer sentences against retrieved context vectors using FastAPI backend..."
         />
       </PageContainer>
     );

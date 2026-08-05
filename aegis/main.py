@@ -1,7 +1,8 @@
 import json
 import time
 import uuid
-from typing import Any, Dict, List, Optional
+import re
+from typing import Any, Dict, List, Optional, Tuple
 from fastapi import FastAPI, HTTPException, UploadFile, File, Query
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import Response, JSONResponse
@@ -41,6 +42,74 @@ class ScanInputRequest(BaseModel):
 class BatchScanRequest(BaseModel):
     inputs: List[ScanInputRequest]
     threshold: Optional[float] = 0.75
+
+
+def extract_scan_input_from_json(data: Any, filename: str = "upload.json") -> Tuple[str, List[str], str]:
+    if isinstance(data, dict):
+        if "question" in data and "answer" in data:
+            question = str(data["question"])
+            answer = str(data["answer"])
+            chunks = data.get("retrieved_chunks", [])
+            if not isinstance(chunks, list):
+                chunks = [str(chunks)]
+            else:
+                chunks = [str(c) for c in chunks]
+            return question, chunks, answer
+
+        if "student" in data and isinstance(data["student"], dict):
+            std = data["student"]
+            name = std.get("name", "Student")
+            prog = std.get("program", "Computer Science")
+            about = std.get("about", "")
+            skills = std.get("skills", [])
+            projects = std.get("projects", [])
+            achievements = std.get("achievements", [])
+            
+            question = f"Audit academic profile and project faithfulness for {name} ({prog})"
+            answer = f"{name} is a {prog} student at {std.get('university', 'University')}. {about} Skills include {', '.join(skills)}."
+            chunks = [
+                f"{name} is a student enrolled in {prog} at {std.get('university', 'University')} with CGPA {std.get('cgpa', '3.95')}.",
+                f"{name} is skilled in {', '.join(skills)}.",
+                f"About {name}: {about}",
+            ]
+            for proj in projects:
+                if isinstance(proj, dict):
+                    chunks.append(f"Project '{proj.get('title')}': {proj.get('description')}")
+            for ach in achievements:
+                chunks.append(f"Achievement: {ach}")
+
+            return question, chunks, answer
+
+        question = f"Evaluate dataset payload from {filename}"
+        chunks = []
+        answer_parts = []
+        for k, v in data.items():
+            if isinstance(v, (str, int, float, bool)):
+                answer_parts.append(f"{k}: {v}")
+                chunks.append(f"{k} is {v}.")
+            elif isinstance(v, list):
+                answer_parts.append(f"{k}: {', '.join(str(x) for x in v)}")
+                chunks.append(f"{k} list contains {len(v)} items.")
+            elif isinstance(v, dict):
+                sub_str = json.dumps(v)
+                answer_parts.append(f"{k}: {sub_str}")
+                chunks.append(f"{k} details: {sub_str}")
+        
+        answer = " ".join(answer_parts) if answer_parts else json.dumps(data)
+        if not chunks:
+            chunks = [json.dumps(data)]
+        return question, chunks, answer
+
+    elif isinstance(data, list):
+        question = f"Evaluate list payload from {filename}"
+        chunks = [json.dumps(item) for item in data[:5]]
+        answer = f"Payload contains {len(data)} items."
+        return question, chunks, answer
+
+    else:
+        question = f"Evaluate raw payload from {filename}"
+        raw_str = str(data)
+        return question, [raw_str], raw_str
 
 
 def format_faithfulness_report(
@@ -110,12 +179,7 @@ async def execute_file_scan(file: UploadFile = File(...), threshold: float = 0.7
         content = await file.read()
         data = json.loads(content.decode("utf-8"))
 
-        question = data.get("question", "")
-        retrieved_chunks = data.get("retrieved_chunks", [])
-        answer = data.get("answer", "")
-
-        if not question or not answer:
-            raise ValueError("Input JSON file must contain valid 'question' and 'answer' fields.")
+        question, retrieved_chunks, answer = extract_scan_input_from_json(data, filename=file.filename or "upload.json")
 
         results = scan_faithfulness(
             question=question,
@@ -234,7 +298,6 @@ def get_dashboard_overview():
 @app.get("/api/scans/history")
 def list_reports():
     return list(STORED_REPORTS.values())
-
 
 
 @app.get("/api/reports/{report_id}")
