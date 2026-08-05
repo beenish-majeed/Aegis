@@ -1,10 +1,10 @@
 import * as React from 'react';
-import { motion, HTMLMotionProps } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 
-export interface CardProps extends HTMLMotionProps<'div'> {
+export interface CardProps extends React.HTMLAttributes<HTMLDivElement> {
   hoverEffect?: boolean;
-  children: React.ReactNode;
+  children?: React.ReactNode;
 }
 
 export const Card = React.forwardRef<HTMLDivElement, CardProps>(
@@ -20,7 +20,7 @@ export const Card = React.forwardRef<HTMLDivElement, CardProps>(
           hoverEffect && 'hover:-translate-y-0.5 hover:shadow-md hover:border-indigo-200/80',
           className
         )}
-        {...props}
+        {...(props as any)}
       >
         {children}
       </motion.div>

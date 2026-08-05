@@ -1,14 +1,14 @@
 import * as React from 'react';
-import { motion, HTMLMotionProps } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
-export interface ButtonProps extends HTMLMotionProps<'button'> {
+export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: 'primary' | 'secondary' | 'danger' | 'ghost';
   size?: 'sm' | 'md' | 'lg';
   isLoading?: boolean;
   disabled?: boolean;
-  children: React.ReactNode;
+  children?: React.ReactNode;
 }
 
 export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
@@ -20,6 +20,8 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
       isLoading = false,
       disabled = false,
       children,
+      onClick,
+      type = 'button',
       ...props
     },
     ref
@@ -47,10 +49,12 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
     return (
       <motion.button
         ref={ref}
+        type={type}
+        onClick={onClick as any}
         disabled={disabled || isLoading}
         whileTap={{ scale: disabled || isLoading ? 1 : 0.98 }}
         className={cn(baseStyles, variantStyles[variant], sizeStyles[size], className)}
-        {...props}
+        {...(props as any)}
       >
         {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin text-current" />}
         {children}

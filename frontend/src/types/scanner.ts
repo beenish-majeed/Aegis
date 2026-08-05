@@ -2,6 +2,13 @@ export type FaithfulnessStatus = 'SUPPORTED' | 'POTENTIALLY_UNSUPPORTED';
 
 export type ConfidenceLevel = 'Very High' | 'High' | 'Medium' | 'Low' | 'Very Low';
 
+export interface ScanInput {
+  question: string;
+  answer: string;
+  retrieved_chunks: string[];
+  threshold?: number;
+}
+
 export interface SentenceResult {
   sentence: string;
   status: FaithfulnessStatus;

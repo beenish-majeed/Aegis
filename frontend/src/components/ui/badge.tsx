@@ -13,7 +13,7 @@ export type BadgeVariant =
 
 export interface BadgeProps extends React.HTMLAttributes<HTMLSpanElement> {
   variant?: BadgeVariant;
-  children: React.ReactNode;
+  children?: React.ReactNode;
 }
 
 export function Badge({ className, variant = 'neutral', children, ...props }: BadgeProps) {

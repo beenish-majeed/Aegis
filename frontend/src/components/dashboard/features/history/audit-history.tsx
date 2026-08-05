@@ -1,7 +1,7 @@
 'use client';
 
 import * as React from 'react';
-import { RecentAuditsTable } from '@/components/dashboard/history/recent-audits-table';
+import { RecentAuditsTable } from '@/components/dashboard/recent-audits-table';
 
 export function AuditHistory() {
   return (

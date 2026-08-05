@@ -19,6 +19,8 @@ export function Tooltip({ content, children, side = 'top', className }: TooltipP
     right: 'left-full ml-2 top-1/2 -translate-y-1/2',
   };
 
+  const MotionDiv = motion.div as any;
+
   return (
     <div
       className="relative inline-flex"
@@ -30,7 +32,7 @@ export function Tooltip({ content, children, side = 'top', className }: TooltipP
       {children}
       <AnimatePresence>
         {isVisible && (
-          <motion.div
+          <MotionDiv
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.95 }}
@@ -42,7 +44,7 @@ export function Tooltip({ content, children, side = 'top', className }: TooltipP
             )}
           >
             {content}
-          </motion.div>
+          </MotionDiv>
         )}
       </AnimatePresence>
     </div>

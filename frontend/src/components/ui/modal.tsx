@@ -30,12 +30,14 @@ export function Modal({
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isOpen, onClose]);
 
+  const MotionDiv = motion.div as any;
+
   return (
     <AnimatePresence>
       {isOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
           {/* Backdrop */}
-          <motion.div
+          <MotionDiv
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -44,7 +46,7 @@ export function Modal({
           />
 
           {/* Modal Container */}
-          <motion.div
+          <MotionDiv
             initial={{ opacity: 0, scale: 0.95, y: 10 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 10 }}
@@ -70,7 +72,7 @@ export function Modal({
               </button>
             </div>
             <div className="mt-4">{children}</div>
-          </motion.div>
+          </MotionDiv>
         </div>
       )}
     </AnimatePresence>

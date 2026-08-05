@@ -2,6 +2,7 @@ import * as React from 'react';
 import '@/styles/globals.css';
 import { Sidebar } from '@/components/layout/sidebar';
 import { Header } from '@/components/layout/header';
+import { Providers } from './providers';
 
 export const metadata = {
   title: 'Aegis: RAG Faithfulness Auditor',
@@ -16,11 +17,13 @@ export default function RootLayout({
   return (
     <html lang="en" data-theme="light">
       <body className="flex h-screen w-screen overflow-hidden bg-aegis-background text-aegis-text antialiased">
-        <Sidebar />
-        <div className="flex flex-1 flex-col overflow-hidden">
-          <Header />
-          <main className="flex-1 overflow-y-auto">{children}</main>
-        </div>
+        <Providers>
+          <Sidebar />
+          <div className="flex flex-1 flex-col overflow-hidden">
+            <Header />
+            <main className="flex-1 overflow-y-auto">{children}</main>
+          </div>
+        </Providers>
       </body>
     </html>
   );

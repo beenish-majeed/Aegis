@@ -12,7 +12,7 @@ describe('Badge Component', () => {
   });
 
   it('renders unsupported badge with red alert styles', () => {
-    render(<Badge variant="unsupported font-bold">UNSUPPORTED</Badge>);
+    render(<Badge variant="unsupported" className="font-bold">UNSUPPORTED</Badge>);
     const badge = screen.getByText('UNSUPPORTED');
     expect(badge).toBeInTheDocument();
     expect(badge.className).toContain('bg-aegis-danger-bg');
