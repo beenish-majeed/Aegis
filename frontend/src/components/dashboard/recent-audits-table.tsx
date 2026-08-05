@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { SearchInput } from '@/components/ui/input';
 import { Dropdown } from '@/components/ui/dropdown';
 import { ScanHistoryItem } from '@/types/scanner';
+import { reportService } from '@/services/report.service';
 import { FileText, ExternalLink, Download, MoreHorizontal, Filter } from 'lucide-react';
 
 export interface RecentAuditsTableProps {
@@ -30,35 +31,52 @@ const SAMPLE_AUDITS: ScanHistoryItem[] = [
     faithfulness_score: 58.3,
     status: 'POTENTIALLY_UNSUPPORTED',
   },
-  {
-    id: 'scan-9019',
-    timestamp: '2026-08-04 16:15:40',
-    question: 'List the medical side effects of acetaminophen in clinical trials.',
-    total_sentences: 5,
-    faithfulness_score: 100.0,
-    status: 'SUPPORTED',
-  },
-  {
-    id: 'scan-9018',
-    timestamp: '2026-08-04 14:02:11',
-    question: 'What are the main architectural layers of Next.js 14 App Router?',
-    total_sentences: 8,
-    faithfulness_score: 92.5,
-    status: 'SUPPORTED',
-  },
 ];
 
 export function RecentAuditsTable({ onSelectScan }: RecentAuditsTableProps) {
   const [search, setSearch] = React.useState('');
   const [statusFilter, setStatusFilter] = React.useState<'ALL' | 'SUPPORTED' | 'POTENTIALLY_UNSUPPORTED'>('ALL');
+  const [audits, setAudits] = React.useState<ScanHistoryItem[]>(SAMPLE_AUDITS);
+
+  React.useEffect(() => {
+    reportService.getAllReports().then((reports) => {
+      if (reports && reports.length > 0) {
+        const historyItems: ScanHistoryItem[] = reports.map((rep) => ({
+          id: rep.id,
+          timestamp: rep.timestamp,
+          question: rep.question,
+          total_sentences: rep.results ? rep.results.length : 0,
+          faithfulness_score: rep.faithfulness_score,
+          status: rep.faithfulness_score >= 80 ? 'SUPPORTED' : 'POTENTIALLY_UNSUPPORTED',
+        }));
+        setAudits(historyItems);
+      }
+    });
+  }, []);
 
   const filteredData = React.useMemo(() => {
-    return SAMPLE_AUDITS.filter((item) => {
+    return audits.filter((item) => {
       const matchesSearch = item.question.toLowerCase().includes(search.toLowerCase()) || item.id.toLowerCase().includes(search.toLowerCase());
       const matchesStatus = statusFilter === 'ALL' || item.status === statusFilter;
       return matchesSearch && matchesStatus;
     });
-  }, [search, statusFilter]);
+  }, [audits, search, statusFilter]);
+
+  const handleExport = async (scanId: string, format: 'json' | 'html') => {
+    try {
+      const blob = await reportService.exportReport(scanId, format);
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${scanId}_report.${format}`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      a.remove();
+    } catch {
+      // Ignore fallback
+    }
+  };
 
   const columns: Column<ScanHistoryItem>[] = [
     {
@@ -131,12 +149,12 @@ export function RecentAuditsTable({ onSelectScan }: RecentAuditsTableProps) {
             {
               label: 'Export HTML Report',
               icon: <FileText className="w-3.5 h-3.5" />,
-              onClick: () => {},
+              onClick: () => handleExport(row.id, 'html'),
             },
             {
               label: 'Export JSON',
               icon: <Download className="w-3.5 h-3.5" />,
-              onClick: () => {},
+              onClick: () => handleExport(row.id, 'json'),
             },
           ]}
         />

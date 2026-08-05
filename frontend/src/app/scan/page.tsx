@@ -10,7 +10,6 @@ import { Button } from '@/components/ui/button';
 import { TextInput } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { LoadingState } from '@/components/ui/states/loading-state';
-import { ErrorState } from '@/components/ui/states/error-state';
 import { EmptyState } from '@/components/ui/states/empty-state';
 import { Zap, Upload, FileText, Trash2, Play, Sparkles } from 'lucide-react';
 import { useExecuteScanMutation, useExecuteFileUploadMutation } from '@/hooks/api/use-scan-query';
@@ -87,11 +86,14 @@ export default function SingleScanPage() {
 
     setValidationError(null);
     try {
-      await scanMutation.mutateAsync({
+      const res = await scanMutation.mutateAsync({
         question,
         answer,
         retrieved_chunks: chunks,
       });
+      if (res && typeof window !== 'undefined') {
+        localStorage.setItem('aegis_latest_report', JSON.stringify(res));
+      }
       router.push('/results');
     } catch (err: any) {
       setValidationError(err.message || 'Failed to execute scan on backend.');
@@ -106,17 +108,29 @@ export default function SingleScanPage() {
 
     setValidationError(null);
     try {
-      await fileUploadMutation.mutateAsync(file);
+      const res = await fileUploadMutation.mutateAsync(file);
+      if (res && typeof window !== 'undefined') {
+        localStorage.setItem('aegis_latest_report', JSON.stringify(res));
+      }
       router.push('/results');
     } catch (err: any) {
-      // Fallback: parse client side if backend connection fails
       const reader = new FileReader();
-      reader.onload = (event) => {
+      reader.onload = async (event) => {
         try {
           const json = JSON.parse(event.target?.result as string);
-          if (json.question) setQuestion(json.question);
-          if (json.answer) setAnswer(json.answer);
-          if (Array.isArray(json.retrieved_chunks)) setChunks(json.retrieved_chunks);
+          if (json.question && json.answer && Array.isArray(json.retrieved_chunks)) {
+            const fallbackRes = await scanMutation.mutateAsync({
+              question: json.question,
+              answer: json.answer,
+              retrieved_chunks: json.retrieved_chunks,
+            });
+            if (fallbackRes && typeof window !== 'undefined') {
+              localStorage.setItem('aegis_latest_report', JSON.stringify(fallbackRes));
+            }
+            router.push('/results');
+          } else {
+            setValidationError('Malformed JSON structure inside uploaded file.');
+          }
         } catch {
           setValidationError('Malformed JSON structure inside uploaded file.');
         }

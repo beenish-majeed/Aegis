@@ -230,8 +230,11 @@ def get_dashboard_overview():
 
 
 @app.get("/api/reports")
+@app.get("/api/history")
+@app.get("/api/scans/history")
 def list_reports():
     return list(STORED_REPORTS.values())
+
 
 
 @app.get("/api/reports/{report_id}")

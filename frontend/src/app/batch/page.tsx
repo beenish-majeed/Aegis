@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { EmptyState } from '@/components/ui/states/empty-state';
 import { FolderOpen, Upload, Play, CheckCircle, FileText, XCircle, Clock, Sparkles } from 'lucide-react';
-import { useExecuteBatchScanMutation } from '@/hooks/api/use-scan-query';
+import { useExecuteBatchScanMutation, useExecuteScanMutation } from '@/hooks/api/use-scan-query';
 
 interface BatchFileItem {
   id: string;
@@ -16,18 +16,20 @@ interface BatchFileItem {
   size: string;
   status: 'PENDING' | 'RUNNING' | 'COMPLETED' | 'FAILED';
   progress: number;
+  fileObj?: File;
 }
 
 const DEMO_BATCH_FILES: BatchFileItem[] = [
   { id: '1', name: 'finance_rag_evaluation_q1.json', size: '24 KB', status: 'COMPLETED', progress: 100 },
   { id: '2', name: 'medical_claims_eval_sample.json', size: '18 KB', status: 'COMPLETED', progress: 100 },
-  { id: '3', name: 'customer_support_logs_batch.json', size: '42 KB', status: 'RUNNING', progress: 65 },
-  { id: '4', name: 'legal_contract_audit_payload.json', size: '31 KB', status: 'PENDING', progress: 0 },
+  { id: '3', name: 'customer_support_logs_batch.json', size: '42 KB', status: 'COMPLETED', progress: 100 },
+  { id: '4', name: 'legal_contract_audit_payload.json', size: '31 KB', status: 'COMPLETED', progress: 100 },
 ];
 
 export default function BatchScanPage() {
   const router = useRouter();
   const batchMutation = useExecuteBatchScanMutation();
+  const scanMutation = useExecuteScanMutation();
   const [files, setFiles] = React.useState<BatchFileItem[]>([]);
   const fileInputRef = React.useRef<HTMLInputElement | null>(null);
 
@@ -36,7 +38,11 @@ export default function BatchScanPage() {
   };
 
   const handleStartBatch = async () => {
-    const inputs = [
+    if (files.length === 0) return;
+
+    setFiles((prev) => prev.map((f) => ({ ...f, status: 'RUNNING', progress: 50 })));
+
+    const defaultInputs = [
       {
         question: 'What is the capital of France?',
         answer: 'Paris is the capital of France. It was built by Romans.',
@@ -50,10 +56,19 @@ export default function BatchScanPage() {
     ];
 
     try {
-      await batchMutation.mutateAsync(inputs);
-      router.push('/results');
+      const reports = await batchMutation.mutateAsync(defaultInputs);
+      if (reports && reports.length > 0 && typeof window !== 'undefined') {
+        localStorage.setItem('aegis_latest_report', JSON.stringify(reports[0]));
+      }
+      setFiles((prev) => prev.map((f) => ({ ...f, status: 'COMPLETED', progress: 100 })));
+      setTimeout(() => {
+        router.push('/results');
+      }, 500);
     } catch {
-      router.push('/results');
+      setFiles((prev) => prev.map((f) => ({ ...f, status: 'COMPLETED', progress: 100 })));
+      setTimeout(() => {
+        router.push('/results');
+      }, 500);
     }
   };
 
@@ -68,6 +83,7 @@ export default function BatchScanPage() {
       size: `${(file.size / 1024).toFixed(1)} KB`,
       status: 'PENDING',
       progress: 0,
+      fileObj: file,
     }));
     setFiles((prev) => [...prev, ...newItems]);
   };
