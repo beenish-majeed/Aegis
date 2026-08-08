@@ -3,13 +3,22 @@ import time
 import uuid
 import re
 from typing import Any, Dict, List, Optional, Tuple
-from fastapi import FastAPI, HTTPException, UploadFile, File, Query
+from fastapi import FastAPI, HTTPException, UploadFile, File, Query, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import Response, JSONResponse
 from pydantic import BaseModel, Field
 
 from aegis.scanner import scan_faithfulness, load_scan_input
 from aegis.report import compute_scan_summary, generate_json_report, generate_html_report
+from aegis.db import create_user, get_user_by_email, get_user_by_id
+from aegis.auth import (
+    hash_password,
+    verify_password,
+    create_access_token,
+    validate_email_format,
+    validate_password_strength,
+    get_current_user,
+)
 
 app = FastAPI(
     title="Aegis RAG Faithfulness Auditor API",
@@ -42,6 +51,93 @@ class ScanInputRequest(BaseModel):
 class BatchScanRequest(BaseModel):
     inputs: List[ScanInputRequest]
     threshold: Optional[float] = 0.75
+
+
+class RegisterRequest(BaseModel):
+    email: str
+    password: str
+
+
+class LoginRequest(BaseModel):
+    email: str
+    password: str
+
+
+class UserResponse(BaseModel):
+    id: str
+    email: str
+
+
+class AuthTokenResponse(BaseModel):
+    token: str
+    token_type: str = "bearer"
+    user: UserResponse
+
+
+@app.post("/api/auth/register", response_model=AuthTokenResponse, status_code=201)
+def register_user(request: RegisterRequest):
+    clean_email = validate_email_format(request.email)
+    validate_password_strength(request.password)
+
+    existing_user = get_user_by_email(clean_email)
+    if existing_user:
+        raise HTTPException(
+            status_code=400,
+            detail="Email address is already registered.",
+        )
+
+    hashed_pw = hash_password(request.password)
+    user = create_user(email=clean_email, hashed_password=hashed_pw)
+    token = create_access_token(data={"sub": user["id"]})
+
+    return {
+        "token": token,
+        "token_type": "bearer",
+        "user": {
+            "id": user["id"],
+            "email": user["email"],
+        },
+    }
+
+
+@app.post("/api/auth/login", response_model=AuthTokenResponse)
+def login_user(request: LoginRequest):
+    clean_email = validate_email_format(request.email)
+
+    user = get_user_by_email(clean_email)
+    if not user or not verify_password(request.password, user["hashed_password"]):
+        raise HTTPException(
+            status_code=401,
+            detail="Invalid email or password.",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    token = create_access_token(data={"sub": user["id"]})
+
+    return {
+        "token": token,
+        "token_type": "bearer",
+        "user": {
+            "id": user["id"],
+            "email": user["email"],
+        },
+    }
+
+
+@app.get("/api/auth/me", response_model=UserResponse)
+def get_auth_me(current_user: Dict[str, Any] = Depends(get_current_user)):
+    return {
+        "id": current_user["id"],
+        "email": current_user["email"],
+    }
+
+
+@app.post("/api/auth/logout")
+def logout_user():
+    return {
+        "status": "success",
+        "message": "Successfully logged out.",
+    }
 
 
 def extract_scan_input_from_json(data: Any, filename: str = "upload.json") -> Tuple[str, List[str], str]:

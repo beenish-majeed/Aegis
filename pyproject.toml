@@ -15,7 +15,9 @@ authors = [
 dependencies = [
     "fastapi>=0.100.0",
     "pydantic>=2.0.0",
-    "numpy>=1.20.0"
+    "numpy>=1.20.0",
+    "pyjwt>=2.8.0",
+    "passlib[bcrypt]>=1.7.4"
 ]
 
 [project.scripts]
