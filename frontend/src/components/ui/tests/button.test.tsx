@@ -28,6 +28,6 @@ describe('Button Primitive Component', () => {
   it('applies danger variant styles', () => {
     render(<Button variant="danger">Delete</Button>);
     const button = screen.getByRole('button');
-    expect(button.className).toContain('bg-aegis-danger-bg');
+    expect(button.className).toContain('bg-rose-500/10');
   });
 });

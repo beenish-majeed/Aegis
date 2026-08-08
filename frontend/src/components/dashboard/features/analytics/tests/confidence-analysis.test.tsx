@@ -15,7 +15,7 @@ describe('ConfidenceAnalysis Feature Component', () => {
       />
     );
 
-    expect(screen.getByText('Faithfulness Score')).toBeInTheDocument();
+    expect(screen.getByText('Faithfulness Health')).toBeInTheDocument();
     expect(screen.getByText('Confidence Histogram')).toBeInTheDocument();
   });
 });

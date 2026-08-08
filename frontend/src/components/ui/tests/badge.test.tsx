@@ -8,13 +8,13 @@ describe('Badge Component', () => {
     render(<Badge variant="supported">SUPPORTED</Badge>);
     const badge = screen.getByText('SUPPORTED');
     expect(badge).toBeInTheDocument();
-    expect(badge.className).toContain('bg-aegis-success-bg');
+    expect(badge.className).toContain('bg-emerald-500/10');
   });
 
   it('renders unsupported badge with red alert styles', () => {
     render(<Badge variant="unsupported" className="font-bold">UNSUPPORTED</Badge>);
     const badge = screen.getByText('UNSUPPORTED');
     expect(badge).toBeInTheDocument();
-    expect(badge.className).toContain('bg-aegis-danger-bg');
+    expect(badge.className).toContain('bg-rose-500/10');
   });
 });
